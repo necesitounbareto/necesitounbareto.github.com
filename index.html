@@ -850,7 +850,7 @@ dialog::backdrop { transition: opacity 260ms ease; }
         <li><button type="button" data-ir="1" aria-current="step"><span class="n">1</span><span><b>Encabezado</b><small>Fecha, horas y responsable</small></span></button></li>
         <li><button type="button" data-ir="2"><span class="n">2</span><span><b>Territorio</b><small>Barrio y equipo</small></span></button></li>
         <li><button type="button" data-ir="3"><span class="n">3</span><span><b>Resultados</b><small>Cifras de la jornada</small></span></button></li>
-        <li><button type="button" data-ir="4"><span class="n">4</span><span><b>Cierre</b><small>Dificultades y evidencias</small></span></button></li>
+        <li><button type="button" data-ir="4"><span class="n">4</span><span><b>Evidencias</b><small>Asistencia y fotografías</small></span></button></li>
         <li><button type="button" data-ir="5"><span class="n">5</span><span><b>Compromisos</b><small>Tareas y asistencia</small></span></button></li>
         <li><button type="button" data-ir="6"><span class="n">6</span><span><b>Revisar y exportar</b><small>Vista previa y Word</small></span></button></li>
       </ol>
@@ -945,7 +945,7 @@ dialog::backdrop { transition: opacity 260ms ease; }
             <button type="button" class="btn" id="btnOrganizar"><svg class="i"><use href="#i-varita"/></svg>Organizar notas por secciones</button>
           </div>
           <div class="organizador nota info" id="organizador" role="status"></div>
-          <label class="interruptor"><span><b>Redacción amplia</b><small>Agrega párrafos institucionales variados (programa, metodología, orientación, recomendaciones). No inventa cifras, hallazgos ni dificultades.</small></span><input type="checkbox" data-campo="redaccionAmplia"></label>
+          <label class="interruptor"><span><b>Redacción amplia</b><small>Agrega párrafos institucionales variados (programa, metodología y orientación en salud). No inventa cifras ni hallazgos.</small></span><input type="checkbox" data-campo="redaccionAmplia"></label>
         </div>
         <div class="grupo" data-solo="planeacion">
           <h3>Actividades programadas</h3>
@@ -976,23 +976,9 @@ dialog::backdrop { transition: opacity 260ms ease; }
       <!-- ===== Paso 4 ===== -->
       <section class="paso" data-paso="4" aria-labelledby="t-paso4">
         <header class="paso-cabeza">
-          <h2 id="t-paso4">Cierre del acta</h2>
-          <p>Dificultades, recomendaciones y evidencias. Todo es opcional: las recomendaciones generales se agregan solas.</p>
+          <h2 id="t-paso4">Evidencias</h2>
+          <p>Registro de asistencia, fotografías y otras evidencias de la jornada.</p>
         </header>
-        <div class="grupo">
-          <h3>Dificultades presentadas</h3>
-          <div class="chips" id="chipsDificultades" data-lista="dificultades" style="margin-top:14px"></div>
-          <div class="campo" style="margin-top:14px"><label for="f-dificultadesTexto">Otras dificultades <span class="opcional">una por renglón</span></label><textarea id="f-dificultadesTexto" data-campo="dificultadesTexto" style="min-height:64px"></textarea></div>
-          <label class="interruptor" style="margin-top:6px"><span><b>No se presentaron dificultades</b><small>Escribe esa frase en el apartado de dificultades.</small></span><input type="checkbox" data-campo="sinDificultades"></label>
-        </div>
-        <div class="grupo">
-          <h3>Recomendaciones</h3>
-          <div class="campo" style="margin-top:14px">
-            <label for="f-recomendaciones" class="sr">Recomendaciones</label>
-            <textarea id="f-recomendaciones" data-campo="recomendaciones" placeholder="Una por renglón"></textarea>
-          </div>
-          <div class="acciones-fila"><button type="button" class="btn" id="btnSugerirRec"><svg class="i"><use href="#i-varita"/></svg>Sugerir según las dificultades</button></div>
-        </div>
         <div class="grupo">
           <h3>Evidencias y anexos</h3>
           <label class="interruptor"><span><b>Registro de asistencia</b><small>Con fecha y horario de la actividad.</small></span><input type="checkbox" data-campo="evidencias.asistencia"></label>
@@ -1077,7 +1063,7 @@ dialog::backdrop { transition: opacity 260ms ease; }
             </div>
             <div class="tarjeta-lado">
               <h3>Opciones del documento</h3>
-              <label class="interruptor"><span><b>Redacción amplia</b><small>Agrega párrafos institucionales variados (programa, metodología, orientación, recomendaciones). No inventa cifras, hallazgos ni dificultades.</small></span><input type="checkbox" data-campo="redaccionAmplia"></label>
+              <label class="interruptor"><span><b>Redacción amplia</b><small>Agrega párrafos institucionales variados (programa, metodología y orientación en salud). No inventa cifras ni hallazgos.</small></span><input type="checkbox" data-campo="redaccionAmplia"></label>
             </div>
             <div class="tarjeta-lado textos-acta" id="textosActa">
               <h3>Texto del acta</h3>
@@ -2509,9 +2495,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const CIFRAS = [
     { id: 'prediosEfectivos', etiqueta: 'Predios abordados efectivos' },
     { id: 'prediosNoAbrieron', etiqueta: 'Predios abordados que no abrieron' },
-    { id: 'usuariosEfectivos', etiqueta: 'Usuarios efectivos' },
-    { id: 'usuariosRechazaron', etiqueta: 'Usuarios que rechazaron la atención' },
-    { id: 'remisiones', etiqueta: 'Remisiones realizadas' }
+    { id: 'usuariosEfectivos', etiqueta: 'Usuarios efectivos' }
   ];
 
   // El catálogo de determinantes vive en el módulo heredado (const global).
@@ -2622,9 +2606,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const pats = [
       ['prediosNoAbrieron', /(?:no\s+abri\w*|sin\s+respuesta)[^\d\n]{0,8}(\d+)|(\d+)\s*(?:predios?|casas?|viviendas?)?\s*(?:que\s+)?(?:no\s+abri\w*|sin\s+respuesta)/i],
       ['prediosEfectivos', /(?:predios?|casas?|viviendas?)\s*(?:abordad\w*\s*)?efectiv\w*[^\d\n]{0,8}(\d+)|(\d+)\s*(?:predios?|casas?|viviendas?)\s*(?:abordad\w*\s*)?efectiv\w*/i],
-      ['usuariosRechazaron', /usuarios?[^\d\n]{0,20}rechaz\w*[^\d\n]{0,8}(\d+)|(\d+)\s*usuarios?[^\n]{0,15}rechaz/i],
-      ['usuariosEfectivos', /usuarios?\s*efectiv\w*[^\d\n]{0,8}(\d+)|(\d+)\s*usuarios?\s*efectiv/i],
-      ['remisiones', /remisi\w*[^\d\n]{0,10}(\d+)|(\d+)\s*remisi/i]
+      ['usuariosEfectivos', /usuarios?\s*efectiv\w*[^\d\n]{0,8}(\d+)|(\d+)\s*usuarios?\s*efectiv/i]
     ];
     lineas(texto).forEach(l => {
       let usada = false;
@@ -2635,8 +2617,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       if (usada && l.replace(/[^a-záéíóúñ]/gi, '').length < 45) return;
       const n = U.norm(l);
       if (/^(compromiso|pendiente|queda pendiente|se acuerda|acordamos|proxima|volver a)/.test(n)) r.compromisos.push(l.replace(/^(compromiso|pendiente)\s*:?\s*/i, ''));
-      else if (/^(recomend|se recomienda|sugerencia|sugiero)/.test(n)) r.recomendaciones.push(l.replace(/^recomendaci\w*\s*:?\s*/i, ''));
-      else if (/dificult|insegur|no quisieron|no nos|rechaz|lluvi|no abri|no hab[ií]a nadie|no atend/.test(n)) r.dificultades.push(l);
+      // (Dificultades y recomendaciones ya no son secciones del acta: esas líneas
+      // se quedan en el desarrollo para no perder lo que escribió el usuario.)
       else if (/basura|residuo|habitantes? de calle|roedor|ratas|zancudo|vector|humedad|hacinamiento|consum|excremento|quema/.test(n)) r.hallazgos.push(l);
       else r.desarrollo.push(l);
     });
@@ -2826,22 +2808,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (amplio) amplio.enfoque.concat(amplio.cierre).forEach(x => out.push(x));
     if (amplio && amplio.cierre.length) out.cierre = amplio.cierre[0]; // el relleno va antes del cierre
 
-    const difs = (d.dificultades || []).map(id => (DIFICULTADES.find(k => k.id === id) || {}).texto).filter(Boolean)
-      .concat(formalizar(d.dificultadesTexto, true));
-    if (difs.length || d.sinDificultades) {
-      out.push('## Dificultades presentadas:');
-      if (difs.length) difs.forEach(x => out.push(x.replace(/^•\s*/, '')));
-      else out.push('No se presentaron dificultades durante la actividad.');
-    }
-
-    const recs = formalizar(d.recomendaciones, true);
-    // Con redacción amplia se completan hasta 3 recomendaciones generales
-    // (son sugerencias, no hechos), sin repetir las que ya escribió el usuario.
-    if (amplio) amplio.recomendaciones.forEach(x => { if (recs.length < 4 && !recs.some(y => U.norm(y) === U.norm(x))) recs.push(x); });
-    if (recs.length) {
-      out.push('## Recomendaciones para el mejoramiento de las acciones en territorio:');
-      recs.forEach(x => out.push(x.replace(/^•\s*/, '')));
-    }
+    // Las secciones "Dificultades presentadas" y "Recomendaciones" se retiraron del
+    // acta por solicitud del usuario: ya no se escriben aunque un borrador antiguo
+    // tenga datos guardados en esos campos.
 
     const ev = [];
     const fl = U.fechaLarga(d.fecha);
@@ -5915,7 +5884,6 @@ function llenarCampo(xml, token, texto, terminos, separar){
     });
     $('f-marco').placeholder = R.MARCO_DEFECTO;
     pintarChips('chipsHallazgos', R.HALLAZGOS, 'hallazgos');
-    pintarChips('chipsDificultades', R.DIFICULTADES, 'dificultades');
     pintarCifras();
     pintarDeterminantes();
     ['equipo', 'compromisos', 'asistentes'].forEach(pintarFilas);
@@ -6240,15 +6208,13 @@ function llenarCampo(xml, token, texto, terminos, separar){
     const cl = R.clasificarNotas(d.notas);
     const movidos = [];
     const nCif = Object.keys(cl.cifras).filter(k => U.limpio((d.cifras || {})[k]) === '').length;
-    if (!nCif && !cl.hallazgos.length && !cl.dificultades.length && !cl.recomendaciones.length && !cl.compromisos.length) {
-      mostrarOrganizador('<span>' + icono('info') + '</span><div>No encontré cifras, hallazgos, dificultades ni compromisos para separar. Las notas se usarán completas en el desarrollo.</div>');
+    if (!nCif && !cl.hallazgos.length && !cl.compromisos.length) {
+      mostrarOrganizador('<span>' + icono('info') + '</span><div>No encontré cifras, condiciones del entorno ni compromisos para separar. Las notas se usarán completas en el desarrollo.</div>');
       return;
     }
     st._organizacion = cl;
     if (nCif) movidos.push(nCif + (nCif === 1 ? ' cifra' : ' cifras') + ' → Resultados');
     if (cl.hallazgos.length) movidos.push(cl.hallazgos.length + ' condición del entorno → Condiciones del entorno'.replace('condición', cl.hallazgos.length === 1 ? 'condición' : 'condiciones'));
-    if (cl.dificultades.length) movidos.push(cl.dificultades.length + (cl.dificultades.length === 1 ? ' dificultad' : ' dificultades') + ' → Dificultades');
-    if (cl.recomendaciones.length) movidos.push(cl.recomendaciones.length + (cl.recomendaciones.length === 1 ? ' recomendación' : ' recomendaciones') + ' → Recomendaciones');
     if (cl.compromisos.length) movidos.push(cl.compromisos.length + (cl.compromisos.length === 1 ? ' compromiso' : ' compromisos') + ' → Compromisos');
     mostrarOrganizador('<span>' + icono('varita') + '</span><div><b>Esto se puede separar de tus notas:</b><ul>' + movidos.map(m => '<li>' + U.esc(m) + '</li>').join('') +
       '</ul><p style="margin-top:6px">El resto queda como desarrollo. Nada se reescribe con hechos nuevos.</p><div class="acciones-fila"><button type="button" class="btn btn-primario" id="btnAplicarOrg">Separar</button><button type="button" class="btn" id="btnCancelarOrg">Dejar como está</button></div></div>');
@@ -6261,14 +6227,12 @@ function llenarCampo(xml, token, texto, terminos, separar){
     Object.keys(cl.cifras).forEach(k => { if (U.limpio(d.cifras[k]) === '') d.cifras[k] = String(cl.cifras[k]); });
     const sumar = (campo, items) => { if (items.length) d[campo] = [U.limpio(d[campo])].concat(items).filter(Boolean).join('\n'); };
     sumar('hallazgosTexto', cl.hallazgos);
-    sumar('dificultadesTexto', cl.dificultades);
-    sumar('recomendaciones', cl.recomendaciones);
     cl.compromisos.forEach(c => d.compromisos.push({ que: c, quien: '', cuando: '', cumplido: '', observaciones: '' }));
     d.notas = cl.desarrollo.join('\n');
     st._organizacion = null;
     $('organizador').classList.remove('visible');
     rellenar(); cambio();
-    avisar('Notas organizadas. Revisa los pasos 4 y 5.');
+    avisar('Notas organizadas. Revisa los pasos 3 y 5.');
   }
 
   // ---------- Historial ----------
@@ -6467,15 +6431,6 @@ function llenarCampo(xml, token, texto, terminos, separar){
     });
 
     $('btnOrganizar').onclick = organizarNotas;
-    $('btnSugerirRec').onclick = () => {
-      const s = R.sugerirRecomendaciones(st.reg.datos).split(/\n+/).filter(Boolean);
-      const actuales = lineas(st.reg.datos.recomendaciones);
-      const nuevas = s.filter(x => actuales.indexOf(x) === -1);
-      if (!nuevas.length) { avisar('No hay sugerencias nuevas para las dificultades marcadas', 'info'); return; }
-      st.reg.datos.recomendaciones = actuales.concat(nuevas).join('\n');
-      $('f-recomendaciones').value = st.reg.datos.recomendaciones;
-      cambio(); avisar(nuevas.length + (nuevas.length === 1 ? ' recomendación sugerida' : ' recomendaciones sugeridas') + '. Edítalas a tu criterio.');
-    };
     $('btnAnterior').onclick = () => conTransicion(() => irA(st.paso - 1), 'atras');
     $('btnSiguiente').onclick = () => conTransicion(() => irA(st.paso + 1), 'adelante');
     $('listaPasos').addEventListener('click', e => {
