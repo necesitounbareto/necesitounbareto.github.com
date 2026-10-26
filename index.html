@@ -733,6 +733,23 @@ dialog::backdrop { background: rgba(0, 0, 0, .32); -webkit-backdrop-filter: blur
 }
 @media (prefers-reduced-motion: reduce) { .dss-det-cuerpo { animation: none; } }
 
+/* ---------- Corregir: fotos del acta ---------- */
+.fotos-corr { border-top: 1px solid var(--linea); padding-top: 10px; display: grid; gap: 10px; }
+.fotos-corr-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.fotos-corr-cabeza b { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.fotos-corr-cabeza b svg { width: 15px; height: 15px; color: var(--acento); }
+.fotos-corr-cabeza .subir-corr { margin-left: auto; position: relative; overflow: hidden; }
+.subir-corr input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.subir-corr svg { width: 14px; height: 14px; }
+.fotos-corr-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.foto-corr { margin: 0; border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; background: var(--superficie-2); position: relative; }
+.foto-corr img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.foto-corr figcaption { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 2px 4px; }
+.foto-corr figcaption .btn { font-size: 12px; padding: 4px 6px; min-height: 0; }
+.foto-corr-quitar { all: unset; cursor: pointer; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; color: var(--texto-2); }
+.foto-corr-quitar:hover { background: var(--error-suave); color: var(--error); }
+.foto-corr-quitar:focus-visible { outline: 3px solid var(--acento-anillo); }
+
 /* =========================================================
    Capa "Apple Design" (WWDC: Designing Fluid Interfaces)
    - Resortes reales: amortiguamiento crítico (1.0) por defecto,
@@ -1121,6 +1138,7 @@ dialog::backdrop { transition: opacity 260ms ease; }
               <span class="zona-texto"><span class="zona-titulo">Agregar fotografías</span><span class="zona-sub" id="fotosResumen">Se insertan al final de los compromisos, dos por hoja.</span></span>
             </label>
             <div class="lista-archivos" id="listaFotos" hidden></div>
+            <label class="interruptor" style="margin-top:12px"><span><b>Todas las fotos en máximo 2 hojas</b><small>Con más de 4 fotos se acomodan juntas en cuadrícula; si no, van dos por hoja.</small></span><input type="checkbox" data-campo="opciones.fotosCompactas"></label>
             <span class="ayuda">Las fotografías no se guardan en el historial: solo permanecen mientras esta página esté abierta.</span>
           </div>
         </div>
@@ -2076,9 +2094,71 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return imagenes.length;
   }
 
+  /* Fotos juntas en máximo dos hojas: cuántas columnas y filas por hoja y el
+     tamaño máximo de cada foto. Alto útil de una hoja ≈ 2 × 3,4" + 0,17" (lo que
+     ocupan hoy dos fotos apiladas, medido en Word); ancho útil 6,5". */
+  const EMU = 914400;
+  function disposicionFotos(n) {
+    if (n <= 4) return { columnas: 1, filas: 2, porHoja: 2, maxCx: 5943600, maxCy: GEO.fotoAltoEmu };
+    const porHoja = Math.ceil(n / 2);
+    const columnas = porHoja <= 8 ? 2 : 3;
+    const filas = Math.min(4, Math.ceil(porHoja / columnas));
+    const altoUtil = 7.3, separacion = 0.09;           // pulgadas (medido en Word)
+    const maxCy = Math.floor(((altoUtil - (filas - 1) * separacion) / filas - 0.06) * EMU);
+    const maxCx = Math.floor(((6.5 - (columnas - 1) * 0.16) / columnas - 0.05) * EMU);
+    return { columnas, filas, porHoja: columnas * filas, maxCx, maxCy };
+  }
+
+  // Cuadrícula: cada renglón es un párrafo centrado con varias fotos en línea.
+  async function insertarRejilla(zip, doc, ancla, imagenes, dom, cfg) {
+    const relsRuta = 'word/_rels/document.xml.rels';
+    const rels = new dom.DOMParser().parseFromString(await zip.file(relsRuta).async('string'), 'application/xml');
+    const raiz = rels.documentElement;
+    const parser = new dom.DOMParser();
+    const titulo = doc.createElementNS(W, 'w:p');
+    const ppr = titulo.appendChild(wEl(doc, 'pPr'));
+    ppr.appendChild(wEl(doc, 'pageBreakBefore'));
+    escribirParrafoSimple(doc, titulo, cfg.titulo, true);
+    ancla.parentNode.insertBefore(titulo, ancla.nextSibling);
+    ancla = titulo;
+    const runs = imagenes.map((ax, i) => {
+      const ext = ax.tipo === 'png' ? 'png' : 'jpg';
+      const nombre = cfg.prefijo + (i + 1) + '.' + ext;
+      zip.file('word/media/' + nombre, ax.bytes);
+      const rid = 'rId' + cfg.prefijo.charAt(0).toUpperCase() + cfg.prefijo.slice(1) + (i + 1);
+      const rel = rels.createElementNS(NS_PKG_REL, 'Relationship');
+      rel.setAttribute('Id', rid);
+      rel.setAttribute('Type', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image');
+      rel.setAttribute('Target', 'media/' + nombre);
+      raiz.appendChild(rel);
+      let cx = cfg.maxCx, cy = Math.round(cfg.maxCx * (ax.alto / ax.ancho));
+      if (cy > cfg.maxCy) { cy = cfg.maxCy; cx = Math.round(cfg.maxCy * (ax.ancho / ax.alto)); }
+      // El párrafo de xmlAnexo trae el dibujo en su único w:r.
+      return xmlAnexo(rid, cfg.idBase + i, nombre, cx, cy, '').replace(/^.*?<w:r>/, '<w:r>').replace(/<\/w:p>$/, '');
+    });
+    const separador = '<w:r><w:t xml:space="preserve">   </w:t></w:r>';
+    for (let i = 0, fila = 0; i < runs.length; i += cfg.columnas, fila++) {
+      const enHoja = fila % cfg.filas;
+      const extra = fila > 0 && enHoja === 0 ? '<w:pageBreakBefore/>' : enHoja > 0 ? '<w:spacing w:before="' + Math.round(cfg.separacionTwips) + '" w:after="0"/>' : '<w:spacing w:after="0"/>';
+      const xml = '<w:p xmlns:w="' + W + '"><w:pPr>' + extra + '<w:jc w:val="center"/></w:pPr>' + runs.slice(i, i + cfg.columnas).join(separador) + '</w:p>';
+      const p = doc.importNode(parser.parseFromString(xml, 'application/xml').documentElement, true);
+      ancla.parentNode.insertBefore(p, ancla.nextSibling);
+      ancla = p;
+    }
+    zip.file(relsRuta, serializar(rels, dom));
+    return imagenes.length;
+  }
+
   // Registro fotográfico: después de los compromisos, en página nueva (sección
-  // vertical), dos fotos por hoja, una sobre otra y centradas.
+  // vertical), dos fotos por hoja, una sobre otra y centradas. Con
+  // opciones.fotosCompactas y más de 4 fotos, todas van en cuadrícula en dos hojas.
   function agregarAnexos(zip, doc, tablaCompromisos, anexos, dom, opciones) {
+    if (opciones.fotosCompactas && anexos && anexos.length > 4) {
+      const dsp = disposicionFotos(anexos.length);
+      return insertarRejilla(zip, doc, tablaCompromisos, anexos, dom, Object.assign({
+        prefijo: 'anexo', idBase: 9000, titulo: opciones.tituloAnexos || 'Registro fotográfico', separacionTwips: 0.09 * 1440
+      }, dsp));
+    }
     return insertarImagenes(zip, doc, tablaCompromisos, anexos, dom, {
       prefijo: 'anexo', idBase: 9000,
       maxCx: 5943600, maxCy: GEO.fotoAltoEmu, // 6,5" de ancho; alto para que quepan 2 por hoja
@@ -2314,7 +2394,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   // Cuántos renglones del formato ocupará una lista de párrafos (mismo cálculo que el Word).
   function contarRenglones(cadenas, separar) { return aRenglones(cadenas || [], !!separar).length; }
 
-  A.motor = { generar, verificar, contarLineas, anchoTexto, GEO, analizar, lineasDe, contarRenglones, segmentosNarrativos, localizar };
+  A.motor = { generar, verificar, contarLineas, anchoTexto, GEO, disposicionFotos, analizar, lineasDe, contarRenglones, segmentosNarrativos, localizar };
 })(globalThis.Actas = globalThis.Actas || {});
 
 </script>
@@ -4603,6 +4683,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   'use strict';
   const U = A.util;
   const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+  const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
   // ---------- Utilidades de texto ----------
   const limpiarLinea = s => String(s || '').replace(/[​ ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -4687,22 +4769,37 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       }
     });
 
-    // Fotografías: imágenes referenciadas por el cuerpo (los logos del formato
-    // están en el encabezado y el pie, con relaciones propias).
+    // Fotografías: imágenes del cuerpo en orden de aparición (los logos del formato
+    // están en el encabezado y el pie, con relaciones propias). Las que están en la
+    // tabla "5. Asistencia" o después de ella son la planilla fotografiada.
     const relsF = zip.file('word/_rels/document.xml.rels');
     if (relsF) {
       const rels = parser.parseFromString(await relsF.async('string'), 'application/xml');
-      const lista = Array.prototype.slice.call(rels.getElementsByTagName('Relationship')).filter(r => /\/image$/.test(r.getAttribute('Type')));
-      for (const r of lista) {
-        const ruta = 'word/' + r.getAttribute('Target').replace(/^\/?(word\/)?/, '');
-        const f = zip.file(ruta);
-        if (f) crudo.fotos.push({ nombre: ruta.split('/').pop(), bytes: await f.async('uint8array'), tipo: /png$/i.test(ruta) ? 'image/png' : 'image/jpeg' });
+      const destino = {};
+      Array.prototype.slice.call(rels.getElementsByTagName('Relationship'))
+        .filter(r => /\/image$/.test(r.getAttribute('Type')))
+        .forEach(r => { destino[r.getAttribute('Id')] = 'word/' + r.getAttribute('Target').replace(/^\/?(word\/)?/, ''); });
+      const vistos = new Set();
+      let enAsistencia = false;
+      for (let el = body.firstChild; el; el = el.nextSibling) {
+        if (el.nodeType !== 1) continue;
+        if (el.localName === 'tbl' && /(^|\s)5\.?\s*asistencia/.test(U.norm(texto(hijos(el, 'tr')[0] || el)))) enAsistencia = true;
+        const blips = Array.prototype.slice.call(el.getElementsByTagNameNS(NS_A, 'blip'));
+        for (const b of blips) {
+          const ruta = destino[b.getAttributeNS(NS_R, 'embed')];
+          if (!ruta || vistos.has(ruta)) continue;
+          vistos.add(ruta);
+          const f = zip.file(ruta);
+          if (!f) continue;
+          const nombre = ruta.split('/').pop();
+          crudo.fotos.push({ nombre, bytes: await f.async('uint8array'), tipo: /png$/i.test(ruta) ? 'image/png' : 'image/jpeg', asistencia: enAsistencia || /^asistencia/i.test(nombre) });
+        }
       }
     }
     return crudo;
   }
 
-  // ---------- Lectura de PDF (solo texto) ----------
+  // ---------- Lectura de PDF (texto y fotos) ----------
   // Renglones del PDF con sus celdas: [{ y, celdas: [{ x, t }], texto }], en orden de lectura.
   // pdf.js viaja dentro del HTML como texto sin ejecutar (ver build.mjs); se evalúa
   // la primera vez. El worker corre en el mismo hilo (globalThis.pdfjsWorker), así
@@ -4715,10 +4812,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return globalThis.pdfjsLib;
   }
 
-  async function lineasPdf(bytes) {
+  async function abrirPdf(bytes) {
     const pdfjs = cargarPdfjs();
     if (!pdfjs) throw new Error('El lector de PDF no está disponible.');
-    const pdf = await pdfjs.getDocument({ data: bytes }).promise;
+    return pdfjs.getDocument({ data: bytes }).promise;
+  }
+
+  async function lineasPdf(pdf) {
     const lineas = [];
     for (let n = 1; n <= pdf.numPages; n++) {
       const pag = await pdf.getPage(n);
@@ -4738,8 +4838,72 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return lineas;
   }
 
-  async function leerPdf(bytes) {
-    const todas = await lineasPdf(bytes);
+  // Huella de una imagen (muestra de píxeles) para reconocer los logos del formato,
+  // que se repiten idénticos en cada página.
+  function huellaImagen(obj) {
+    let datos = obj.data;
+    if (!datos && obj.bitmap && typeof document !== 'undefined') {
+      const c = document.createElement('canvas'); c.width = 16; c.height = 16;
+      const ctx = c.getContext('2d'); ctx.drawImage(obj.bitmap, 0, 0, 16, 16);
+      datos = ctx.getImageData(0, 0, 16, 16).data;
+    }
+    if (!datos) return obj.width + 'x' + obj.height;
+    let h = 0; const paso = Math.max(1, Math.floor(datos.length / 997));
+    for (let i = 0; i < datos.length; i += paso) h = (Math.imul(31, h) + datos[i]) | 0;
+    return obj.width + 'x' + obj.height + ':' + h;
+  }
+  // Pasa una imagen de pdf.js a JPEG (solo en el navegador).
+  async function jpegDeImagen(obj) {
+    if (typeof document === 'undefined') return null;
+    const c = document.createElement('canvas'); c.width = obj.width; c.height = obj.height;
+    const ctx = c.getContext('2d');
+    if (obj.bitmap) ctx.drawImage(obj.bitmap, 0, 0);
+    else if (obj.data) {
+      const img = ctx.createImageData(obj.width, obj.height), d = img.data, s = obj.data;
+      const n = obj.width * obj.height;
+      if (obj.kind === 3) d.set(s.subarray(0, n * 4));
+      else if (obj.kind === 2) { for (let i = 0, j = 0; i < n; i++, j += 3) { d[i * 4] = s[j]; d[i * 4 + 1] = s[j + 1]; d[i * 4 + 2] = s[j + 2]; d[i * 4 + 3] = 255; } }
+      else { // 1 bit por píxel (escala de grises)
+        const fila = (obj.width + 7) >> 3;
+        for (let y = 0; y < obj.height; y++) for (let x = 0; x < obj.width; x++) {
+          const v = (s[y * fila + (x >> 3)] >> (7 - (x & 7))) & 1 ? 255 : 0, k = (y * obj.width + x) * 4;
+          d[k] = d[k + 1] = d[k + 2] = v; d[k + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    } else return null;
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9));
+    return blob ? new Uint8Array(await blob.arrayBuffer()) : null;
+  }
+  // Fotografías del PDF: sin los logos (se repiten en varias páginas) ni imágenes
+  // pequeñas. Las de la página de "5. Asistencia" en adelante son la planilla.
+  async function imagenesPdf(pdf, pagAsistencia) {
+    const OPS = globalThis.pdfjsLib.OPS;
+    const halladas = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const pag = await pdf.getPage(n);
+      const ol = await pag.getOperatorList();
+      for (let i = 0; i < ol.fnArray.length; i++) {
+        if (ol.fnArray[i] !== OPS.paintImageXObject) continue;
+        const nombre = ol.argsArray[i][0];
+        if (typeof nombre !== 'string') continue;
+        const obj = await new Promise(res => (nombre.startsWith('g_') ? pag.commonObjs : pag.objs).get(nombre, res));
+        if (!obj || obj.width < 200 || obj.height < 200) continue;
+        halladas.push({ pag: n, obj, huella: huellaImagen(obj) });
+      }
+    }
+    const paginasPorHuella = {};
+    halladas.forEach(x => { (paginasPorHuella[x.huella] = paginasPorHuella[x.huella] || new Set()).add(x.pag); });
+    const vistas = new Set();
+    return halladas.filter(x => {
+      if (paginasPorHuella[x.huella].size > 1 || vistas.has(x.huella)) return false;
+      vistas.add(x.huella); return true;
+    }).map((x, i) => ({ pag: x.pag, ancho: x.obj.width, alto: x.obj.height, obj: x.obj, asistencia: !!pagAsistencia && x.pag >= pagAsistencia, nombre: 'foto_pdf_' + (i + 1) + '.jpg' }));
+  }
+
+  async function leerPdf(bytes, opciones) {
+    const pdf = await abrirPdf(bytes);
+    const todas = await lineasPdf(pdf);
     const crudo = { encabezado: [], proceso: '', elabora: [], objetivo: [], temas: [], desarrollo: [], compromisos: [], asistentes: [], fotos: [] };
     // Encabezado institucional (se repite en cada página): desde "SUBRED…" hasta
     // la fila de valores que empieza con la fecha. Se toman los valores una vez.
@@ -4772,6 +4936,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (iTem >= 0) crudo.temas = unirRenglones(textos(iTem + 1, iDes > iTem ? iDes : iTem + 8));
     if (iDes >= 0) crudo.desarrollo = textos(iDes + 1, iComp > iDes ? iComp : (iAsis > iDes ? iAsis : lineas.length))
       .filter(t => !/desarrollo.*continuacion/i.test(U.norm(t)));
+    // Fotos (registro fotográfico y planilla de asistencia).
+    if (!(opciones && opciones.sinFotos)) {
+      const imgs = await imagenesPdf(pdf, iAsis >= 0 ? lineas[iAsis].pag : 0);
+      for (const im of imgs) {
+        const b = await jpegDeImagen(im.obj);
+        crudo.fotos.push({ nombre: im.nombre, bytes: b, tipo: 'image/jpeg', asistencia: im.asistencia, ancho: im.ancho, alto: im.alto, pag: im.pag });
+      }
+    }
     return crudo;
   }
 
@@ -4887,7 +5059,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (d.determinantes.length) hallado.push(d.determinantes.length + (d.determinantes.length === 1 ? ' determinante social' : ' determinantes sociales'));
 
     // Evidencias
-    d.evidencias = { asistencia: /registro de asistencia/i.test(todo), fotos: /registro fotogr[aá]fico/i.test(todo) || crudo.fotos.length > 0, otras: '' };
+    d.evidencias = { asistencia: /registro de asistencia/i.test(todo), fotos: /registro fotogr[aá]fico/i.test(todo) || crudo.fotos.some(f => !f.asistencia), otras: '' };
+    if (crudo.fotos.some(f => f.asistencia)) d.evidencias.asistencia = true;
 
     // Notas: lo que escribió la persona (no plantilla, no rótulos, no listas, no cifras).
     const ctx = { L: R.lugar(d), loc: d.localidad };
@@ -4925,7 +5098,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       .map(c => ({ que: c.que, quien: c.quien, cuando: c.cuando, cumplido: /x/i.test(c.si) ? 'si' : /x/i.test(c.no) ? 'no' : '', observaciones: c.observaciones }));
     d.asistentes = (crudo.asistentes || []).filter(a => a.nombre);
     if (d.asistentes.length) hallado.push(d.asistentes.length + ' asistentes');
-    if (crudo.fotos.length) hallado.push(crudo.fotos.length + (crudo.fotos.length === 1 ? ' fotografía' : ' fotografías'));
+    const nFotos = crudo.fotos.filter(f => !f.asistencia).length, nAsis = crudo.fotos.length - nFotos;
+    if (nFotos) hallado.push(nFotos + (nFotos === 1 ? ' fotografía' : ' fotografías'));
+    if (nAsis) hallado.push(nAsis === 1 ? 'foto de la asistencia' : nAsis + ' fotos de la asistencia');
     return { datos: d, hallado };
   }
 
@@ -4934,12 +5109,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const esPdf = /\.pdf$/i.test(archivo.name) || (bytes[0] === 0x25 && bytes[1] === 0x50);
     const crudo = esPdf ? await leerPdf(bytes) : await leerDocx(bytes);
     const r = interpretar(crudo, opciones);
-    r.fotos = crudo.fotos;
+    r.fotos = crudo.fotos.filter(f => f.bytes && !f.asistencia);
+    r.fotosAsistencia = crudo.fotos.filter(f => f.bytes && f.asistencia);
     r.formato = esPdf ? 'pdf' : 'docx';
     return r;
   }
 
-  A.importar = { leer, leerDocx, leerPdf, interpretar, unirRenglones, oraciones, horaDe, fechaDe };
+  A.importar = { leer, leerDocx, leerPdf, imagenesPdf, abrirPdf, interpretar, unirRenglones, oraciones, horaDe, fechaDe };
 })(globalThis.Actas = globalThis.Actas || {});
 
 </script>
@@ -7913,7 +8089,8 @@ function llenarCampo(xml, token, texto, terminos, separar){
   function pintarFotos() {
     const l = $('listaFotos');
     l.hidden = !st.fotos.length;
-    $('fotosResumen').textContent = st.fotos.length ? st.fotos.length + (st.fotos.length === 1 ? ' fotografía lista' : ' fotografías listas') : 'Se insertan al final de los compromisos, dos por hoja.';
+    const juntas = (st.reg.datos.opciones || {}).fotosCompactas && st.fotos.length > 4;
+    $('fotosResumen').textContent = st.fotos.length ? st.fotos.length + (st.fotos.length === 1 ? ' fotografía lista' : ' fotografías listas') + (juntas ? ': van juntas en 2 hojas' : '') : 'Se insertan al final de los compromisos, dos por hoja.';
     l.innerHTML = chipsFotos(st.fotos, 'fotos');
     const la = $('listaFotosAsistencia');
     const n = st.fotosAsistencia.length;
@@ -7962,7 +8139,7 @@ function llenarCampo(xml, token, texto, terminos, separar){
   async function generarBytes() {
     const m = modeloActual();
     const op = st.reg.datos.opciones || {};
-    const r = await M.generar(plantillaBytes(), m, { separarParrafos: op.separarParrafos !== false, conservarRenglones: op.conservarRenglones !== false });
+    const r = await M.generar(plantillaBytes(), m, { separarParrafos: op.separarParrafos !== false, conservarRenglones: op.conservarRenglones !== false, fotosCompactas: op.fotosCompactas === true });
     return { modelo: m, bytes: r.bytes, informe: r.informe };
   }
 
@@ -8221,7 +8398,7 @@ function llenarCampo(xml, token, texto, terminos, separar){
       const m = R.construir(paraRedactar(r), r.semilla || 0);
       anotarDss(r, m);
       const op = r.datos.opciones || {};
-      const g = await M.generar(plantillaBytes(), m, { separarParrafos: op.separarParrafos !== false, conservarRenglones: op.conservarRenglones !== false });
+      const g = await M.generar(plantillaBytes(), m, { separarParrafos: op.separarParrafos !== false, conservarRenglones: op.conservarRenglones !== false, fotosCompactas: op.fotosCompactas === true });
       descargar(g.bytes, (ps.length ? 'BORRADOR_' : '') + R.nombreArchivo(r.datos));
       if (!ps.length) { r.estado = 'generado'; S.guardar(r); pintarHistorial(); }
       avisar('Word descargado');
@@ -8285,19 +8462,24 @@ function llenarCampo(xml, token, texto, terminos, separar){
   async function leerParaCorregir(files) {
     const lista = Array.from(files || []).filter(f => /\.(docx|pdf)$/i.test(f.name));
     if (!lista.length) { avisar('Solo se pueden corregir archivos .docx o .pdf', 'error'); return; }
-    const nuevos = lista.map(f => ({ id: U.uid(), archivo: f, formato: /\.pdf$/i.test(f.name) ? 'pdf' : 'docx', estado: 'leyendo', fotos: [] }));
+    const nuevos = lista.map(f => ({ id: U.uid(), archivo: f, formato: /\.pdf$/i.test(f.name) ? 'pdf' : 'docx', estado: 'leyendo', fotos: [], fotosAsistencia: [] }));
     corr.items = nuevos.concat(corr.items);
     pintarCorregir();
     for (const it of nuevos) {
       try {
         const res = await A.importar.leer(it.archivo, { perfil: S.perfil() });
-        for (const f of res.fotos || []) {
-          try { it.fotos.push(await normalizarFoto(new File([f.bytes], f.nombre, { type: f.tipo }))); } catch (e) { /* imagen ilegible: se omite */ }
+        // Las fotos del acta se conservan: registro fotográfico y planilla de asistencia.
+        for (const [origen, destino] of [[res.fotos, 'fotos'], [res.fotosAsistencia, 'fotosAsistencia']]) {
+          for (const f of origen || []) {
+            try { it[destino].push(await normalizarFoto(new File([f.bytes], f.nombre, { type: f.tipo }))); } catch (e) { /* imagen ilegible: se omite */ }
+          }
         }
         const reg = S.nuevo();
         reg.datos = Object.assign(res.datos, { id: reg.id });
         reg.corregidaDe = it.archivo.name;
+        reg.datos.opciones = Object.assign({}, reg.datos.opciones, { fotosCompactas: true });
         if (it.fotos.length) reg.datos.evidencias.fotos = true;
+        if (it.fotosAsistencia.length) reg.datos.evidencias.asistencia = true;
         it.hallado = res.hallado;
         it.reg = reg;
         it.estado = 'listo';
@@ -8335,7 +8517,7 @@ function llenarCampo(xml, token, texto, terminos, separar){
       const d = it.reg && it.reg.datos;
       const titulo = U.esc(it.archivo.name);
       let sub, cuerpo = '', acciones = '', estado = '';
-      if (it.estado === 'leyendo') sub = 'Leyendo el acta…';
+      if (it.estado === 'leyendo') sub = it.formato === 'pdf' ? 'Leyendo el acta y sus fotos…' : 'Leyendo el acta…';
       else if (it.estado === 'fallo') sub = 'No se pudo leer: ' + U.esc(it.error);
       else {
         const barrio = (d.barrios || '').split(/[,;]/)[0].trim() || d.microterritorio || 'sin barrio';
@@ -8344,8 +8526,9 @@ function llenarCampo(xml, token, texto, terminos, separar){
         const faltanDss = D.faltantes(d), nDet = D.efectivos(d).length - faltanDss.length, nCond = (d.hallazgos || []).length;
         const rehace = ['objetivo, temas y desarrollo con redacción amplia', nDet ? nDet + (nDet === 1 ? ' determinante explicado' : ' determinantes explicados') : '', nCond ? nCond + (nCond === 1 ? ' condición del entorno explicada' : ' condiciones del entorno explicadas') : ''].filter(Boolean);
         cuerpo = '<div class="item-corr-chips">' + it.hallado.map(h => '<span class="chip-leido">' + icono('check') + U.esc(h) + '</span>').join('') + '</div>' +
-          '<p class="pie-nota">Se rehace: ' + U.esc(rehace.join(' · ')) + '.' + (it.formato === 'pdf' ? ' Del PDF no se recuperan las fotos: adjúntalas en el paso 4.' : '') + '</p>' +
+          '<p class="pie-nota">Se rehace: ' + U.esc(rehace.join(' · ')) + '.' + '</p>' +
           (it.pendientes.length ? '<div class="item-corr-chips">' + it.pendientes.map(p => '<span class="chip-falta">' + icono('alerta') + U.esc(p.mensaje) + '</span>').join('') + '</div>' : '') +
+          htmlFotosCorr(it) +
           '<details class="corr-dss" data-corr-dss="' + it.id + '"' + (abiertos.has(it.id) || (abiertos.size === 0 && faltanDss.length) ? ' open' : '') + '><summary>' + icono('der') + '<span>Determinantes sociales · ' +
           (D.normalizar(d).sinHallazgos ? 'sin hallazgos' : (nDet ? nDet + (nDet === 1 ? ' con su situación' : ' con su situación') : 'ninguno con situación')) +
           (faltanDss.length ? '</span><span class="chip-falta">' + faltanDss.length + ' por completar: ' + U.esc(faltanDss.map(D.etiqueta).join(', ')) + '</span>' : '</span>') + '</summary>' +
@@ -8363,14 +8546,69 @@ function llenarCampo(xml, token, texto, terminos, separar){
     formatos.forEach(id => { const f = cont.querySelector('details.corr-dss[data-corr-dss="' + id + '"] details.dss-formato'); if (f) f.open = true; });
   }
 
+  // Miniaturas de las fotos de un acta en Corregir (en memoria, como en el editor).
+  function urlFoto(f) { if (!f.url) f.url = URL.createObjectURL(new Blob([f.bytes], { type: 'image/jpeg' })); return f.url; }
+  function htmlFotosCorr(it) {
+    const op = it.reg.datos.opciones || {};
+    const n = it.fotos.length, na = it.fotosAsistencia.length;
+    const miniatura = (f, i, lista) => '<figure class="foto-corr"><img src="' + urlFoto(f) + '" alt="' + U.esc(f.nombre) + '">' +
+      '<figcaption><button type="button" class="btn btn-plano" data-corr-foto="mover" data-lista="' + lista + '" data-i="' + i + '" data-id="' + it.id + '">' +
+      (lista === 'fotos' ? 'Es la asistencia' : 'Es del registro') + '</button>' +
+      '<button type="button" class="foto-corr-quitar" data-corr-foto="quitar" data-lista="' + lista + '" data-i="' + i + '" data-id="' + it.id + '" aria-label="Quitar ' + U.esc(f.nombre) + '">×</button></figcaption></figure>';
+    const hojas = n === 0 ? '' : (op.fotosCompactas && n > 4 ? ' · van juntas en 2 hojas' : ' · ' + Math.ceil(n / 2) + (Math.ceil(n / 2) === 1 ? ' hoja' : ' hojas'));
+    return '<section class="fotos-corr">' +
+      '<div class="fotos-corr-cabeza"><b>' + icono('foto') + 'Registro fotográfico</b><span class="pie-nota">' + (n ? n + (n === 1 ? ' foto' : ' fotos') + hojas : 'Sin fotos') + '</span>' +
+      '<label class="btn btn-plano subir-corr">' + icono('mas') + 'Agregar fotos<input type="file" accept="image/jpeg,image/png" multiple data-corr-subir="fotos" data-id="' + it.id + '"></label></div>' +
+      (n ? '<div class="fotos-corr-rejilla">' + it.fotos.map((f, i) => miniatura(f, i, 'fotos')).join('') + '</div>' : '') +
+      (n > 4 ? '<label class="chk"><input type="checkbox" data-corr-juntas data-id="' + it.id + '"' + (op.fotosCompactas ? ' checked' : '') + '> Todas las fotos en máximo 2 hojas</label>' : '') +
+      '<div class="fotos-corr-cabeza"><b>' + icono('gente') + 'Asistencia</b><span class="pie-nota">' + (na ? (na === 1 ? 'Foto de la planilla: reemplaza la tabla de asistencia' : na + ' fotos de la planilla: reemplazan la tabla de asistencia') : 'Sin foto de la planilla') + '</span>' +
+      '<label class="btn btn-plano subir-corr">' + icono('mas') + (na ? 'Agregar otra' : 'Agregar foto de la asistencia') + '<input type="file" accept="image/jpeg,image/png" data-corr-subir="fotosAsistencia" data-id="' + it.id + '"></label></div>' +
+      (na ? '<div class="fotos-corr-rejilla">' + it.fotosAsistencia.map((f, i) => miniatura(f, i, 'fotosAsistencia')).join('') + '</div>' : '') +
+      '</section>';
+  }
+  function marcarEvidenciasFotos(it) {
+    const ev = it.reg.datos.evidencias = it.reg.datos.evidencias || {};
+    if (it.fotos.length) ev.fotos = true;
+    if (it.fotosAsistencia.length) ev.asistencia = true;
+  }
+  function clicFotoCorr(b) {
+    const it = corr.items.find(x => x.id === b.dataset.id); if (!it) return;
+    const lista = b.dataset.lista, i = +b.dataset.i;
+    const [f] = it[lista].splice(i, 1);
+    if (b.dataset.corrFoto === 'mover') {
+      (lista === 'fotos' ? it.fotosAsistencia : it.fotos).push(f);
+      avisar(lista === 'fotos' ? 'Foto movida a la asistencia: reemplaza la tabla de asistencia del formato' : 'Foto movida al registro fotográfico');
+    } else if (f && f.url) URL.revokeObjectURL(f.url);
+    marcarEvidenciasFotos(it); actualizarEstadoCorregida(it); pintarCorregir(); vibrar(8);
+  }
+  async function cambioFotosCorr(e) {
+    const t = e.target;
+    const it = t.dataset.id && corr.items.find(x => x.id === t.dataset.id);
+    if (!it) return;
+    if (t.hasAttribute('data-corr-juntas')) {
+      it.reg.datos.opciones = Object.assign({}, it.reg.datos.opciones, { fotosCompactas: t.checked });
+      actualizarEstadoCorregida(it); pintarCorregir(); return;
+    }
+    if (t.dataset.corrSubir) {
+      for (const f of Array.from(t.files || [])) {
+        if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { avisar(f.name + ': solo se admiten fotos JPG o PNG', 'error'); continue; }
+        try { it[t.dataset.corrSubir].push(await normalizarFoto(f)); } catch (err) { avisar('No se pudo leer ' + f.name, 'error'); }
+      }
+      t.value = '';
+      marcarEvidenciasFotos(it); actualizarEstadoCorregida(it); pintarCorregir();
+    }
+  }
+
   async function bytesCorregida(it) {
     // El acta pudo editarse en el editor después de leerla: se usa lo guardado.
     const reg = S.obtener(it.reg.id) || it.reg;
     const m = R.construir(paraRedactar(reg), reg.semilla || 0);
     anotarDss(reg, m);
     m.anexos = it.fotos.map(f => ({ bytes: f.bytes, tipo: f.tipo, ancho: f.ancho, alto: f.alto }));
+    m.fotosAsistencia = it.fotosAsistencia.map(f => ({ bytes: f.bytes, tipo: f.tipo, ancho: f.ancho, alto: f.alto }));
+    if (m.fotosAsistencia.length) m.asistentes = []; // la tabla se reemplaza por la foto
     const op = reg.datos.opciones || {};
-    const g = await M.generar(plantillaBytes(), m, { separarParrafos: op.separarParrafos !== false, conservarRenglones: op.conservarRenglones !== false });
+    const g = await M.generar(plantillaBytes(), m, { separarParrafos: op.separarParrafos !== false, conservarRenglones: op.conservarRenglones !== false, fotosCompactas: op.fotosCompactas === true });
     it.reg = reg;
     actualizarEstadoCorregida(it);
     return { bytes: g.bytes, nombre: (it.pendientes.length ? 'BORRADOR_' : '') + R.nombreArchivo(reg.datos) };
@@ -8384,6 +8622,7 @@ function llenarCampo(xml, token, texto, terminos, separar){
       guardarYa();
       abrir(S.obtener(it.reg.id) || it.reg);
       st.fotos = it.fotos.slice();
+      st.fotosAsistencia = it.fotosAsistencia.slice();
       pintarFotos();
       conTransicion(() => { mostrarVista('editor'); irA(it.pendientes.length ? (it.pendientes[0].paso || 1) : 6); }, 'vista');
       return;
@@ -8552,9 +8791,9 @@ function llenarCampo(xml, token, texto, terminos, separar){
     ['dragenter', 'dragover'].forEach(ev => zonaCorr.addEventListener(ev, e => { e.preventDefault(); zonaCorr.classList.add('arrastrando'); }));
     ['dragleave', 'drop'].forEach(ev => zonaCorr.addEventListener(ev, e => { e.preventDefault(); zonaCorr.classList.remove('arrastrando'); }));
     zonaCorr.addEventListener('drop', e => leerParaCorregir(e.dataTransfer.files));
-    $('listaCorregir').addEventListener('click', e => { if (clicDss(e)) return; const b = e.target.closest('[data-corr]'); if (b) accionCorregir(b.dataset.corr, b.dataset.id, b); });
+    $('listaCorregir').addEventListener('click', e => { if (clicDss(e)) return; const bf = e.target.closest('[data-corr-foto]'); if (bf) { clicFotoCorr(bf); return; } const b = e.target.closest('[data-corr]'); if (b) accionCorregir(b.dataset.corr, b.dataset.id, b); });
     $('listaCorregir').addEventListener('input', entradaDss);
-    $('listaCorregir').addEventListener('change', cambioDss);
+    $('listaCorregir').addEventListener('change', e => { if (!cambioDss(e)) cambioFotosCorr(e); });
     $('btnCorregirTodas').onclick = descargarTodasCorregidas;
     $('btnCorregirLimpiar').onclick = () => { corr.items = []; pintarCorregir(); };
 
