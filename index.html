@@ -857,6 +857,15 @@ dialog::backdrop { background: rgba(0, 0, 0, .32); -webkit-backdrop-filter: blur
 }
 @media (prefers-reduced-transparency: reduce) { .sel-pop { background: var(--superficie); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
+/* ---------- Socialización y comité ---------- */
+.sugerencias-comp:empty { display: none; }
+.sugerencias-comp { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--linea); }
+.sugerencias-lista { display: grid; gap: 6px; margin-top: 8px; }
+.sugerencia { all: unset; box-sizing: border-box; display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 12px; border: 1px dashed var(--linea-fuerte); font-size: 13px; line-height: 1.4; color: var(--texto-2); cursor: pointer; transition: background var(--t-rapido), border-color var(--t-rapido), color var(--t-rapido); }
+.sugerencia:hover { background: var(--acento-suave); border-color: var(--acento); color: var(--texto); }
+.sugerencia:focus-visible { outline: 3px solid var(--acento-anillo); }
+.sugerencia svg { width: 15px; height: 15px; flex: none; margin-top: 1px; color: var(--acento); }
+
 /* =========================================================
    Capa "Apple Design" (WWDC: Designing Fluid Interfaces)
    - Resortes reales: amortiguamiento crítico (1.0) por defecto,
@@ -1137,7 +1146,34 @@ dialog::backdrop { transition: opacity 260ms ease; }
           <div class="tipos tipos-2" role="radiogroup" aria-label="Tipo de acta" style="margin-top:16px">
             <label class="tipo"><input type="radio" name="tipo" value="ruteo" data-campo="tipo"><svg class="i"><use href="#i-casa"/></svg><b>Ruteo</b><small>Gestión territorial con el Equipo Básico de Salud y cifras de la jornada.</small></label>
             <label class="tipo"><input type="radio" name="tipo" value="lider" data-campo="tipo"><svg class="i"><use href="#i-gente"/></svg><b>Líder social</b><small>Acercamiento a líderes y actores sociales o comerciales del sector.</small></label>
+            <label class="tipo"><input type="radio" name="tipo" value="socializacion" data-campo="tipo"><svg class="i"><use href="#i-charla"/></svg><b>Socialización EBS</b><small>Socialización de los Equipos Básicos de Salud (Ministerio) con comerciantes, residentes y comunidad.</small></label>
+            <label class="tipo"><input type="radio" name="tipo" value="comite" data-campo="tipo"><svg class="i"><use href="#i-lazo"/></svg><b>Comité EMBH–EBS</b><small>Comité de articulación entre Equipos Más Bienestar en tu Hogar y Equipos Básicos de Salud.</small></label>
           </div>
+        </div>
+        <div class="grupo" data-solo="socializacion">
+          <h3>Público participante</h3>
+          <p class="ayuda-grupo">Con quiénes se hizo la socialización. El acta solo nombra a los grupos que marques.</p>
+          <div class="chips" id="chipsPublico" data-lista="publico" style="margin-top:12px"></div>
+          <div class="rejilla" style="margin-top:14px">
+            <div class="campo c8"><label for="f-publicoOtro">Otro público <span class="opcional">opcional</span></label><input type="text" id="f-publicoOtro" data-campo="publicoOtro" placeholder="Ej.: docentes del colegio del sector"></div>
+            <div class="campo c4"><label for="f-personasAbordadas">Personas abordadas <span class="opcional">opcional</span></label><input type="number" min="0" step="1" inputmode="numeric" id="f-personasAbordadas" data-campo="personasAbordadas" placeholder="Sin dato"></div>
+          </div>
+        </div>
+        <div class="grupo" data-solo="comite">
+          <h3>Datos del comité</h3>
+          <div class="rejilla" style="margin-top:12px">
+            <div class="campo c6"><label for="f-lugarReunion">Lugar de la reunión <span class="opcional">opcional</span></label><input type="text" id="f-lugarReunion" data-campo="lugarReunion" placeholder="Ej.: la sede de la Subred, salón comunal…"></div>
+            <div class="campo c6"><label for="f-gtaps">Denominación de GTAPS <span class="opcional">como la usa tu equipo</span></label><input type="text" id="f-gtaps" data-campo="gtaps" placeholder="GTAPS"></div>
+            <div class="campo c12"><label for="f-objetivoManual">Objetivo del comité <span class="opcional">opcional · si lo dejas vacío se redacta según los temas</span></label><input type="text" id="f-objetivoManual" data-campo="objetivoManual"></div>
+          </div>
+          <p class="ayuda-grupo" style="margin-top:14px;font-weight:600;color:var(--texto-2)">Equipos participantes</p>
+          <div class="chips" id="chipsEquiposComite" data-lista="equiposComite" style="margin-top:8px"></div>
+          <div class="campo" style="margin-top:12px"><label for="f-equiposOtro">Otros participantes <span class="opcional">opcional</span></label><input type="text" id="f-equiposOtro" data-campo="equiposOtro" placeholder="Ej.: referente de salud pública"></div>
+        </div>
+        <div class="grupo" data-solo="socializacion comite">
+          <h3 id="tituloTemasActividad">Temas</h3>
+          <p class="ayuda-grupo" id="ayudaTemasActividad">Marca solo los temas que efectivamente se trataron. El acta no agrega los que no marques.</p>
+          <div class="chips" id="chipsTemasActividad" data-lista="temasActividad" style="margin-top:12px"></div>
         </div>
         <div class="grupo" data-solo="lider">
           <h3>Personas contactadas</h3>
@@ -1182,7 +1218,17 @@ dialog::backdrop { transition: opacity 260ms ease; }
           <h2 id="t-paso3">Resultados del ruteo</h2>
           <p>Solo escribe las cifras: el acta redacta el desarrollo completo. Las notas son opcionales, para agregar algo puntual de la jornada.</p>
         </header>
-        <div class="grupo" data-oculto="planeacion lider">
+        <div class="grupo" data-solo="socializacion comite">
+          <h3 id="tituloLoSucedido">Lo que pasó en la actividad</h3>
+          <p class="ayuda-grupo">Todo es opcional. Lo que escribas o marques es lo único que el acta afirma como hecho.</p>
+          <div class="campo" data-solo="socializacion" style="margin-top:14px"><label for="f-inquietudes">Inquietudes o necesidades identificadas <span class="opcional">una por renglón</span></label><textarea id="f-inquietudes" data-campo="inquietudes" style="min-height:72px" placeholder="Ej.: preguntaron cómo afiliar a un familiar"></textarea></div>
+          <div class="campo" data-solo="comite" style="margin-top:14px"><label for="f-situaciones">Situaciones operativas discutidas <span class="opcional">una por renglón</span></label><textarea id="f-situaciones" data-campo="situaciones" style="min-height:72px"></textarea></div>
+          <div class="campo" data-solo="comite" style="margin-top:12px"><label for="f-derivaciones">Derivaciones y seguimiento <span class="opcional">si se trataron</span></label><textarea id="f-derivaciones" data-campo="derivaciones" style="min-height:64px"></textarea></div>
+          <p class="ayuda-grupo" style="margin-top:14px;font-weight:600;color:var(--texto-2)" id="tituloRespuestas">Qué se observó</p>
+          <div class="chips" id="chipsRespuestas" data-lista="respuestas" style="margin-top:8px"></div>
+          <div class="campo" style="margin-top:12px"><label for="f-observaciones">Observaciones <span class="opcional">van en el apartado «Observaciones» del desarrollo</span></label><textarea id="f-observaciones" data-campo="observaciones" style="min-height:64px"></textarea></div>
+        </div>
+        <div class="grupo" data-oculto="planeacion lider socializacion comite">
           <h3>Cifras de la jornada</h3>
           <p class="ayuda-grupo">Un campo vacío no aparece en el acta.</p>
           <div class="rejilla" id="rejillaCifras" style="margin-top:16px"></div>
@@ -1206,7 +1252,7 @@ dialog::backdrop { transition: opacity 260ms ease; }
           <p class="ayuda-grupo">Lo que se acordó hacer. Se redacta como programado, nunca como realizado.</p>
           <div class="campo" style="margin-top:14px"><label for="f-programadas" class="sr">Actividades programadas</label><textarea id="f-programadas" data-campo="programadas" placeholder="Una por renglón, con fecha si la hay"></textarea></div>
         </div>
-        <div class="grupo">
+        <div class="grupo" data-oculto="comite">
           <h3>Condiciones del entorno</h3>
           <p class="ayuda-grupo">Marca solo lo que se observó en esta actividad.</p>
           <div class="chips" id="chipsHallazgos" data-lista="hallazgos"></div>
@@ -1262,6 +1308,7 @@ dialog::backdrop { transition: opacity 260ms ease; }
           <label class="interruptor" style="margin-top:10px"><span><b>Compromiso habitual del gestor</b><small id="textoCompromisoHabitual">Apoyo a los Equipos Básicos de Salud en el territorio de la actividad.</small></span><input type="checkbox" data-campo="compromisoHabitual"></label>
           <p class="ayuda-grupo" style="margin-top:10px">Compromisos adicionales de esta actividad:</p>
           <div class="filas" id="filasCompromisos" style="margin-top:10px"></div>
+          <div class="sugerencias-comp" id="sugerenciasCompromisos" data-solo="socializacion comite"></div>
           <div class="acciones-fila">
             <button type="button" class="btn" data-agregar="compromisos"><svg class="i"><use href="#i-mas"/></svg>Agregar compromiso</button>
           </div>
@@ -1638,7 +1685,25 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  A.util = { esc, norm, limpio, partesFecha, fechaFormato, fechaLarga, hoyISO, minutos, horaFormato, horaTexto, fechaCorta, listaProsa, rng, nombreArchivoSeguro, uid, MESES };
+  // Selector de variantes: evita repetir una fórmula dentro de esta acta y,
+  // si se puede, las usadas en las actas recientes.
+  // Usado por los determinantes sociales y por las actas de socialización y comité.
+  function variador(r, recientes, usados) {
+    return function (clave, arr) {
+      if (!arr || !arr.length) return '';
+      const todos = arr.map((x, i) => i);
+      const enActa = i => usados.indexOf(clave + ':' + i) !== -1;
+      const enRecientes = i => recientes.indexOf(clave + ':' + i) !== -1;
+      let libres = todos.filter(i => !enActa(i) && !enRecientes(i));
+      if (!libres.length) libres = todos.filter(i => !enActa(i));
+      if (!libres.length) libres = todos;
+      const i = libres[Math.floor(r() * libres.length) % libres.length];
+      usados.push(clave + ':' + i);
+      return arr[i];
+    };
+  }
+
+  A.util = { variador, esc, norm, limpio, partesFecha, fechaFormato, fechaLarga, hoyISO, minutos, horaFormato, horaTexto, fechaCorta, listaProsa, rng, nombreArchivoSeguro, uid, MESES };
 })(globalThis.Actas = globalThis.Actas || {});
 
 </script>
@@ -3374,22 +3439,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   function minus(s) { return /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]/.test(s) && !/^(EPS|IPS|EBS)\b/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
   function punto(s) { s = String(s).trim(); return /[.!?:]$/.test(s) ? s : s + '.'; }
 
-  // Selector de variantes: evita repetir una fórmula dentro de esta acta y,
-  // si se puede, las usadas en las actas recientes.
-  function variador(r, recientes, usados) {
-    return function (clave, arr) {
-      if (!arr || !arr.length) return '';
-      const todos = arr.map((x, i) => i);
-      const enActa = i => usados.indexOf(clave + ':' + i) !== -1;
-      const enRecientes = i => recientes.indexOf(clave + ':' + i) !== -1;
-      let libres = todos.filter(i => !enActa(i) && !enRecientes(i));
-      if (!libres.length) libres = todos.filter(i => !enActa(i));
-      if (!libres.length) libres = todos;
-      const i = libres[Math.floor(r() * libres.length) % libres.length];
-      usados.push(clave + ':' + i);
-      return arr[i];
-    };
-  }
+  const variador = U.variador; // compartido (util.js)
 
   // Redacta el apartado de determinantes. ctx: { lugar, actividad, formalizar }.
   function redactar(d, ctx) {
@@ -3627,6 +3677,493 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
 
   A.lider = { RESPUESTAS, objetivo, temas, apertura, personas, METODO, compromiso, personasValidas };
+})(globalThis.Actas = globalThis.Actas || {});
+
+</script>
+<script>
+/* js/actividades.js */
+/* =========================================================
+   Actas.actividades — dos tipos de acta:
+   · socializacion: Socialización de los Equipos Básicos de
+     Salud (EBS – Ministerio de Salud) con la comunidad.
+   · comite: Comité de articulación entre los Equipos Más
+     Bienestar en tu Hogar (EMBH) y los EBS – Ministerio.
+
+   Redacción tomada de las actas modelo del usuario (octubre
+   2026). Cada generación elige un ENFOQUE narrativo (actividades,
+   diálogo, recorrido, necesidades, aspectos operativos o
+   acuerdos), ordena los temas según ese enfoque, combina marcos,
+   conectores y profundidad distintos, y evita las variantes
+   usadas en las actas recientes y en la versión anterior de la
+   misma acta (U.variador). Los hechos salen solo de lo que el
+   usuario registró: temas marcados, público, equipos, notas,
+   inquietudes, situaciones, derivaciones y compromisos.
+   Observaciones y conclusiones van como subtítulos dentro de
+   "3. Desarrollo": la plantilla ET-CO-FT-001 no tiene esas
+   secciones y no se modifica.
+   ========================================================= */
+(function (A) {
+  'use strict';
+  const U = A.util;
+
+  // ---------------- Catálogos ----------------
+  const PUBLICO = [
+    { id: 'comerciantes', etiqueta: 'Comerciantes', texto: 'los comerciantes', acerca: [
+      'Se realizaron acercamientos con los comerciantes del sector, a quienes se presentó la estrategia de los Equipos Básicos de Salud y su finalidad en el territorio.',
+      'Con los comerciantes del sector se adelantó el acercamiento en sus establecimientos, dando a conocer la presencia de los Equipos Básicos de Salud y las acciones que desarrollan.',
+      'El acercamiento con los comerciantes permitió presentarles la estrategia y resaltar su papel como actores del territorio para la difusión de la información en salud.'] },
+    { id: 'propietarios', etiqueta: 'Propietarios de establecimientos', texto: 'los propietarios de establecimientos', acerca: [
+      'Se estableció contacto con propietarios de establecimientos comerciales, a quienes se dio a conocer la labor de los Equipos Básicos de Salud.',
+      'Con los propietarios de establecimientos se compartió información sobre la estrategia y la importancia de difundirla entre trabajadores y clientes.'] },
+    { id: 'trabajadores', etiqueta: 'Trabajadores', texto: 'los trabajadores del sector', acerca: [
+      'También se socializó la estrategia con trabajadores del sector, informando sobre los servicios a los que pueden acceder.',
+      'Los trabajadores del sector recibieron información sobre la estrategia de los Equipos Básicos de Salud y la oferta de servicios disponible.'] },
+    { id: 'residentes', etiqueta: 'Residentes', texto: 'los residentes', acerca: [
+      'Con los residentes del sector se abordó la presencia de los Equipos Básicos de Salud y el acompañamiento que brindan a las familias en su entorno.',
+      'Se realizó acercamiento con residentes del microterritorio, dando a conocer la estrategia y los canales para acceder a la oferta institucional.'] },
+    { id: 'comunidad', etiqueta: 'Comunidad en general', texto: 'la comunidad en general', acerca: [
+      'La socialización se extendió a la comunidad en general, compartiendo información sobre la estrategia y los servicios disponibles en el territorio.',
+      'Se brindó información a las personas de la comunidad que se encontraban en el sector durante el recorrido.'] }
+  ];
+
+  // Temas de la socialización. nucleo: lo explicado (frase nominal); detalle: profundización;
+  // corto: para conclusiones; fin: finalidad para el objetivo.
+  const TEMAS_SOC = [
+    { id: 'funciones', etiqueta: 'Funciones y alcance de los EBS', tema: 'Socialización de la estrategia, funciones y alcance de los Equipos Básicos de Salud (EBS) del Ministerio de Salud y Protección Social.',
+      corto: 'las funciones de los Equipos Básicos de Salud', fin: 'dando a conocer su finalidad y las actividades que desarrollan en el territorio',
+      nucleo: ['las funciones y el alcance de los Equipos Básicos de Salud del Ministerio de Salud y Protección Social', 'la estrategia de los Equipos Básicos de Salud, su finalidad y las actividades que se desarrollan en el territorio', 'la labor del Ministerio de Salud y Protección Social y el trabajo articulado con los equipos territoriales'],
+      detalle: ['Se destacó la importancia de acercar los servicios de salud a la comunidad, identificar necesidades individuales y familiares y orientar a la población hacia las rutas de atención.', 'Se precisó que los equipos acompañan a las familias en su entorno, identifican situaciones que pueden afectar su salud y facilitan el acceso a los servicios institucionales.'] },
+    { id: 'aps', etiqueta: 'Atención Primaria en Salud (APS)', tema: 'Presentación de las acciones de Atención Primaria en Salud (APS).',
+      corto: 'la estrategia de Atención Primaria en Salud', fin: 'en el marco de la Atención Primaria en Salud',
+      nucleo: ['la estrategia de Atención Primaria en Salud (APS)', 'las acciones de Atención Primaria en Salud que se desarrollan en el territorio', 'el enfoque familiar y comunitario de la Atención Primaria en Salud'],
+      detalle: ['Se explicó que la atención primaria privilegia la promoción de la salud, la prevención y el acompañamiento continuo a las familias.', 'Se resaltó que este enfoque reconoce a la familia y a la comunidad como protagonistas del cuidado de su salud.'] },
+    { id: 'promocion', etiqueta: 'Promoción y prevención', tema: 'Información sobre programas de promoción de la salud y prevención de enfermedades.',
+      corto: 'la promoción de la salud y la prevención de enfermedades', fin: 'promoviendo el autocuidado y la prevención de enfermedades',
+      nucleo: ['los programas de promoción de la salud y prevención de enfermedades', 'la importancia del autocuidado y de la prevención en la vida cotidiana', 'las acciones de promoción de la salud y prevención de la enfermedad disponibles para la comunidad'],
+      detalle: ['Se explicó que estas acciones buscan fortalecer el bienestar de la población, fomentar el autocuidado y contribuir a la detección oportuna de situaciones que puedan afectar la salud.', 'Se resaltó la importancia de los controles periódicos y de los hábitos de vida saludables para las personas y sus familias.'] },
+    { id: 'afiliacion', etiqueta: 'Afiliación al SGSSS', tema: 'Orientación sobre afiliación y acceso al Sistema General de Seguridad Social en Salud (SGSSS).',
+      corto: 'la afiliación al Sistema General de Seguridad Social en Salud', fin: 'orientando sobre la afiliación al Sistema General de Seguridad Social en Salud',
+      nucleo: ['la afiliación al Sistema General de Seguridad Social en Salud (SGSSS)', 'los mecanismos de afiliación y acceso al Sistema General de Seguridad Social en Salud', 'la importancia de mantener activa y actualizada la afiliación al sistema de salud'],
+      detalle: ['Se indicó que la afiliación activa es condición para acceder de manera oportuna a los servicios de salud.', 'Se explicaron los canales para consultar el estado de afiliación y realizar novedades ante la entidad correspondiente.'] },
+    { id: 'oferta', etiqueta: 'Programas y oferta institucional', tema: 'Divulgación de la oferta institucional y de las acciones desarrolladas por los equipos territoriales.',
+      corto: 'la oferta institucional', fin: 'divulgando los programas, servicios y la oferta institucional',
+      nucleo: ['los programas, servicios y la oferta institucional disponibles para la comunidad', 'la oferta institucional y las acciones desarrolladas por los equipos territoriales', 'los programas y servicios de la Subred Integrada de Servicios de Salud Centro Oriente'],
+      detalle: ['Se resaltó la relevancia de compartir esta información con trabajadores, clientes y demás integrantes de la comunidad.', 'Se insistió en que conocer la oferta disponible facilita que las personas acudan al servicio adecuado.'] },
+    { id: 'necesidades', etiqueta: 'Identificación de necesidades', tema: 'Importancia del autocuidado y de la identificación oportuna de necesidades en salud.',
+      corto: 'la identificación de necesidades en salud', fin: 'promoviendo la identificación oportuna de necesidades en salud',
+      nucleo: ['la identificación oportuna de necesidades de salud de la población', 'la importancia de reconocer a tiempo las necesidades individuales y familiares en salud'],
+      detalle: ['Se explicó que la identificación oportuna de necesidades permite orientar a las personas hacia la atención que requieren.'] },
+    { id: 'rutas', etiqueta: 'Rutas de atención y servicios', tema: 'Orientación sobre rutas y servicios de atención de acuerdo con las necesidades identificadas.',
+      corto: 'las rutas de atención', fin: 'facilitando el acceso a las rutas de atención y a los servicios disponibles',
+      nucleo: ['las rutas de atención y los servicios disponibles', 'la orientación hacia los servicios institucionales según las necesidades de cada persona', 'los canales institucionales para acceder a los servicios de salud'],
+      detalle: ['Se indicó la importancia de orientar a cada persona hacia el servicio que corresponde a su necesidad.', 'Se mencionaron los canales institucionales a los que puede acudir la comunidad cuando requiera atención.'] },
+    { id: 'inquietudes', etiqueta: 'Resolución de inquietudes', tema: 'Resolución de inquietudes de la comunidad frente a la estrategia.',
+      corto: 'la resolución de inquietudes', fin: 'resolviendo las inquietudes de la comunidad',
+      nucleo: ['las inquietudes planteadas frente a la estrategia', 'las preguntas formuladas sobre los servicios y la estrategia'],
+      detalle: ['Las respuestas se dieron de acuerdo con la información institucional disponible.'] },
+    { id: 'participacion', etiqueta: 'Participación comunitaria', tema: 'Fortalecimiento de la participación comunitaria y del reconocimiento de la presencia institucional en el territorio.',
+      corto: 'la participación comunitaria', fin: 'fortaleciendo la participación comunitaria y el reconocimiento de la presencia institucional',
+      nucleo: ['la participación comunitaria y el reconocimiento de la presencia institucional en el territorio', 'el papel de la comunidad y de los actores del sector en la difusión de la información en salud'],
+      detalle: ['Se promovió la participación de los actores del sector como aliados en la difusión de la información.', 'Se resaltó la importancia de la presencia institucional en el territorio para fortalecer la confianza de la comunidad.'] }
+  ];
+
+  const TEMAS_COM = [
+    { id: 'funciones', etiqueta: 'Funciones de EMBH y EBS', tema: 'Funciones y responsabilidades de los Equipos Más Bienestar en tu Hogar (EMBH) y alcance de los Equipos Básicos de Salud (EBS – Ministerio de Salud).',
+      corto: 'las funciones de cada equipo', fin: 'precisando las funciones y responsabilidades de cada equipo',
+      nucleo: ['las funciones y responsabilidades de los Equipos Más Bienestar en tu Hogar (EMBH) y de los Equipos Básicos de Salud (EBS) del Ministerio de Salud', 'el alcance de cada equipo, diferenciando las responsabilidades de los EMBH y de los EBS del Ministerio', 'el cumplimiento de las actividades asignadas a cada equipo'],
+      detalle: ['Se precisó el alcance de cada equipo con el fin de evitar duplicidades y garantizar la complementariedad de las acciones en el territorio.', 'Se destacó que cada equipo conserva sus funciones propias y que la articulación busca sumar esfuerzos sin confundir competencias.'] },
+    { id: 'articulacion', etiqueta: 'Articulación territorial', tema: 'Articulación entre los equipos territoriales y fortalecimiento del trabajo interdisciplinario.',
+      corto: 'la articulación territorial', fin: 'fortaleciendo la articulación territorial y el trabajo interdisciplinario',
+      nucleo: ['la articulación territorial y el trabajo interdisciplinario entre los equipos', 'la importancia del trabajo articulado en los territorios', 'las estrategias de trabajo conjunto entre los equipos en los microterritorios'],
+      detalle: ['Se resaltó que el trabajo articulado permite integrar los saberes de las distintas disciplinas en beneficio de las familias.', 'Se señaló que la coordinación entre equipos favorece una respuesta más oportuna frente a las situaciones identificadas.'] },
+    { id: 'gtaps', etiqueta: 'Gestión de GTAPS', tema: '{G} y organización de las actividades de Atención Primaria en Salud.',
+      corto: 'la gestión de {G}', fin: 'revisando la gestión de {G}',
+      nucleo: ['los aspectos relacionados con {G}', 'la gestión de {G} y la organización de las actividades territoriales', 'la articulación entre los integrantes de los equipos en el marco de {G}'],
+      detalle: ['Se resaltó la importancia del registro de la información correspondiente y de una adecuada comunicación para el seguimiento de los compromisos.'] },
+    { id: 'derivacion', etiqueta: 'Derivación y orientación de usuarios', tema: 'Proceso de derivaciones y orientación de usuarios.',
+      corto: 'el proceso de derivaciones', fin: 'revisando el proceso de derivación y orientación de usuarios',
+      nucleo: ['el proceso de derivación de usuarios y familias identificados durante los recorridos', 'la orientación de los usuarios de acuerdo con sus necesidades', 'los pasos para derivar a los usuarios hacia el servicio o área correspondiente'],
+      detalle: ['Se recordó la importancia de registrar la información requerida, identificar el servicio correspondiente y realizar el seguimiento pertinente.', 'Se insistió en que la derivación debe acompañarse de la información necesaria para favorecer la continuidad de la atención.'] },
+    { id: 'seguimiento', etiqueta: 'Seguimiento de casos', tema: 'Seguimiento de casos y continuidad de la atención.',
+      corto: 'el seguimiento de casos', fin: 'fortaleciendo el seguimiento de los casos identificados',
+      nucleo: ['el seguimiento de los casos identificados y la continuidad de la atención', 'la continuidad de la atención de los usuarios con casos en seguimiento'],
+      detalle: ['Se señaló que el seguimiento oportuno favorece que las personas reciban la atención que requieren.'] },
+    { id: 'necesidades', etiqueta: 'Necesidades individuales, familiares y comunitarias', tema: 'Identificación de necesidades individuales, familiares y comunitarias.',
+      corto: 'la identificación de necesidades', fin: 'orientando la identificación de necesidades individuales, familiares y comunitarias',
+      nucleo: ['la identificación de necesidades individuales, familiares y comunitarias', 'el acercamiento a las familias y la identificación de sus necesidades en salud'],
+      detalle: ['Se destacó la caracterización de la población y la orientación hacia los servicios institucionales, de acuerdo con las situaciones identificadas.'] },
+    { id: 'planeacion', etiqueta: 'Planeación de recorridos', tema: 'Planeación de recorridos y distribución de responsabilidades.',
+      corto: 'la planeación de recorridos', fin: 'organizando la planeación de recorridos y la distribución de responsabilidades',
+      nucleo: ['la planeación de los recorridos y la distribución de responsabilidades', 'la organización de los recorridos y el cumplimiento de las actividades programadas'],
+      detalle: ['Se señaló la importancia de que cada integrante conozca las actividades que le corresponden.'] },
+    { id: 'microterritorios', etiqueta: 'Organización de microterritorios', tema: 'Planeación y organización de recorridos en los microterritorios.',
+      corto: 'la organización de los microterritorios', fin: 'organizando los microterritorios y la programación de actividades',
+      nucleo: ['la organización de los microterritorios y la programación de actividades', 'la programación de las actividades en cada microterritorio'],
+      detalle: ['Se resaltó que una adecuada organización territorial facilita la cobertura de las familias asignadas.'] },
+    { id: 'formatos', etiqueta: 'Formatos y registro', tema: 'Registro de actividades, diligenciamiento de formatos y soportes.',
+      corto: 'el registro de la información', fin: 'mejorando el diligenciamiento de formatos y el registro de la información',
+      nucleo: ['el diligenciamiento de los formatos y soportes correspondientes', 'la importancia de mantener actualizados los registros de las acciones desarrolladas en campo'],
+      detalle: ['Se insistió en que el registro oportuno y completo respalda las acciones realizadas y facilita el seguimiento.'] },
+    { id: 'reporte', etiqueta: 'Reporte de novedades', tema: 'Reporte de actividades, novedades y dificultades operativas.',
+      corto: 'el reporte de novedades', fin: 'fortaleciendo el reporte de actividades y novedades',
+      nucleo: ['el reporte de actividades, novedades y dificultades operativas', 'la manera de informar oportunamente las novedades y dificultades del trabajo de campo'],
+      detalle: ['Se señaló que informar a tiempo las dificultades facilita su revisión y gestión.'] },
+    { id: 'comunicacion', etiqueta: 'Canales de comunicación', tema: 'Comunicación entre los equipos y coordinación de acciones territoriales.',
+      corto: 'la comunicación entre los equipos', fin: 'fortaleciendo la comunicación entre los equipos',
+      nucleo: ['la necesidad de fortalecer la comunicación entre los equipos EMBH y EBS', 'los canales de comunicación entre los equipos'],
+      detalle: ['Se señaló que una comunicación constante permite evitar la duplicidad de actividades y compartir la información operativa pertinente.', 'Se resaltó que la coordinación de las intervenciones facilita la respuesta frente a las situaciones identificadas en los microterritorios.'] },
+    { id: 'compromisosPrevios', etiqueta: 'Revisión de compromisos anteriores', tema: 'Revisión de compromisos anteriores y formulación de nuevos acuerdos.',
+      corto: 'la revisión de compromisos anteriores', fin: 'revisando los compromisos anteriores',
+      nucleo: ['los compromisos establecidos en espacios anteriores', 'el avance de los compromisos previos y la necesidad de formular nuevos acuerdos'],
+      detalle: [] },
+    { id: 'barreras', etiqueta: 'Barreras de acceso', tema: 'Identificación de barreras de acceso y alternativas de gestión.',
+      corto: 'las barreras de acceso', fin: 'identificando barreras de acceso y alternativas de gestión',
+      nucleo: ['las barreras de acceso a los servicios y las alternativas de gestión', 'las dificultades de acceso que enfrentan los usuarios y las posibles alternativas'],
+      detalle: ['Se resaltó la importancia de gestionar estas situaciones de manera conjunta ante las instancias competentes.'] },
+    { id: 'aps', etiqueta: 'Coordinación de APS', tema: 'Coordinación de las actividades de Atención Primaria en Salud.',
+      corto: 'la coordinación de la Atención Primaria en Salud', fin: 'coordinando las acciones de Atención Primaria en Salud',
+      nucleo: ['la estrategia de Atención Primaria en Salud (APS) y la coordinación de sus actividades', 'el acercamiento a las familias y comunidades en el marco de la Atención Primaria en Salud'],
+      detalle: ['Se hizo énfasis en el acercamiento a las familias y comunidades y en la orientación hacia los servicios institucionales correspondientes.'] }
+  ];
+
+  const EQUIPOS = [
+    { id: 'embh', etiqueta: 'EMBH', texto: 'los Equipos Más Bienestar en tu Hogar (EMBH)' },
+    { id: 'ebs', etiqueta: 'EBS – Ministerio', texto: 'los Equipos Básicos de Salud (EBS) del Ministerio de Salud' },
+    { id: 'gestores', etiqueta: 'Gestores comunitarios', texto: 'los gestores comunitarios' }
+  ];
+
+  // Lo que se observó (lo marca el usuario). Cada uno con varias redacciones.
+  const RESPUESTAS = [
+    { id: 'receptividad', etiqueta: 'Buena receptividad', textos: ['Se observó disposición de {p} para recibir la información compartida.', '{P} recibieron la información con atención y disposición.'] },
+    { id: 'masinfo', etiqueta: 'Pidieron más información', textos: ['Algunas personas solicitaron información adicional sobre los servicios y la estrategia.', 'Se registraron solicitudes de información adicional sobre la oferta institucional.'] },
+    { id: 'desconocian', etiqueta: 'No conocían los EBS', textos: ['Parte de las personas abordadas no conocía la estrategia de los Equipos Básicos de Salud.', 'Se identificó desconocimiento de la estrategia de los Equipos Básicos de Salud en parte de las personas abordadas.'] },
+    { id: 'tiempo', etiqueta: 'Poco tiempo disponible', textos: ['La disponibilidad de tiempo de algunas personas fue limitada, por lo que la información se presentó de manera breve.', 'Por sus ocupaciones, algunas personas contaron con poco tiempo para la socialización.'] },
+    { id: 'difusion', etiqueta: 'Falta más difusión', textos: ['Se evidenció la necesidad de reforzar la difusión de la estrategia en el sector.', 'Se considera necesario ampliar la difusión de la información sobre los Equipos Básicos de Salud en el sector.'] }
+  ];
+  const OBS_COMITE = [
+    { id: 'comunicacion', etiqueta: 'Dificultades de comunicación', textos: ['Se evidenció la necesidad de fortalecer los canales de comunicación entre los equipos EMBH y EBS.', 'Se identificaron dificultades de comunicación entre los equipos que requieren atención.'] },
+    { id: 'organizacion', etiqueta: 'Ajustes en la organización territorial', textos: ['Se identificó la necesidad de ajustar la organización de los microterritorios y la distribución de responsabilidades.', 'La organización territorial requiere ajustes para una mejor distribución de las actividades.'] },
+    { id: 'derivaciones', etiqueta: 'Derivaciones pendientes de seguimiento', textos: ['Quedaron derivaciones que requieren seguimiento por parte de los equipos.', 'Se identificaron casos derivados pendientes de seguimiento.'] },
+    { id: 'registro', etiqueta: 'Novedades en registro y formatos', textos: ['Se reportaron novedades en el diligenciamiento de formatos y el registro de la información.', 'El registro de la información presenta novedades que deben corregirse.'] },
+    { id: 'barreras', etiqueta: 'Barreras de acceso', textos: ['Se identificaron barreras de acceso a los servicios que requieren gestión conjunta.', 'Se reconocieron barreras de acceso para algunos usuarios, que deben gestionarse entre los equipos.'] },
+    { id: 'participacion', etiqueta: 'Participación activa', textos: ['Los participantes intervinieron activamente durante el espacio.', 'El espacio contó con la intervención activa de los participantes.'] }
+  ];
+
+  const COMPROMISOS = {
+    socializacion: [
+      'Continuar con la socialización de la estrategia EBS en los establecimientos comerciales y espacios comunitarios de {T}.',
+      'Promover la difusión de la información sobre programas y servicios de salud entre {p}.',
+      'Orientar a la comunidad hacia los canales institucionales correspondientes cuando se identifiquen necesidades de atención.',
+      'Registrar las inquietudes y necesidades identificadas durante los recorridos para su respectiva orientación y seguimiento.',
+      'Realizar un nuevo acercamiento a los actores del sector para ampliar el conocimiento de la estrategia.',
+      'Compartir con los Equipos Básicos de Salud las necesidades identificadas durante la socialización.'
+    ],
+    comite: [
+      'Fortalecer la comunicación y coordinación entre los equipos EMBH y EBS.',
+      'Mejorar el registro y seguimiento de las derivaciones realizadas durante las intervenciones territoriales.',
+      'Mantener actualizada la información de las actividades ejecutadas y los casos identificados.',
+      'Promover el cumplimiento de las funciones y responsabilidades asignadas a cada equipo.',
+      'Continuar con los espacios de socialización para resolver inquietudes y mejorar los procesos operativos.',
+      'Informar oportunamente las dificultades identificadas durante el trabajo de campo para su revisión y gestión.',
+      'Revisar en el próximo comité el avance de los compromisos establecidos.'
+    ]
+  };
+
+  const TEMAS_EXTRA = {
+    socializacion: ['Presentación del gestor comunitario y de la estrategia de los Equipos Básicos de Salud en el sector.'],
+    comite: ['Apertura del comité y presentación de los participantes.', 'Cierre del espacio y definición de los próximos pasos.']
+  };
+
+  // ---------------- Utilidades ----------------
+  const capital = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  const de = L => /^el /.test(L) ? 'del ' + L.slice(3) : 'de ' + L; // 'de el barrio' -> 'del barrio'
+  const punto = s => { s = String(s || '').trim(); return /[.!?:]$/.test(s) ? s : s + '.'; };
+  const gtaps = d => U.limpio(d.gtaps) || 'GTAPS';
+  const conG = (s, d) => String(s).replace(/\{G\}/g, gtaps(d));
+  function maneja(tipo) { return tipo === 'socializacion' || tipo === 'comite'; }
+  function catalogo(tipo) { return tipo === 'comite' ? TEMAS_COM : TEMAS_SOC; }
+  function temasElegidos(d) {
+    const cat = catalogo(d.tipo);
+    return (d.temasActividad || []).map(id => cat.find(t => t.id === id)).filter(Boolean);
+  }
+  function publico(d) {
+    const p = (d.publico || []).map(id => PUBLICO.find(x => x.id === id)).filter(Boolean);
+    const otros = U.limpio(d.publicoOtro) ? [U.limpio(d.publicoOtro)] : [];
+    return { lista: p, texto: p.length || otros.length ? U.listaProsa(p.map(x => x.texto).concat(otros)) : '' };
+  }
+  function equipos(d) {
+    const e = (d.equiposComite || []).map(id => EQUIPOS.find(x => x.id === id)).filter(Boolean).map(x => x.texto);
+    if (U.limpio(d.equiposOtro)) e.push(U.limpio(d.equiposOtro));
+    return e.length ? U.listaProsa(e) : '';
+  }
+  // Lugar del comité: sitio de la reunión y, si se registró, el territorio.
+  function lugarComite(d, L) {
+    const sitio = U.limpio(d.lugarReunion);
+    const terr = U.limpio(d.barrios) || U.limpio(d.microterritorio) ? L : (U.limpio(d.localidad) ? 'la localidad de ' + U.limpio(d.localidad) : '');
+    return { sitio: sitio ? ' en ' + sitio : '', terr };
+  }
+  // Mezcla determinista (Fisher-Yates con la semilla del acta).
+  function barajar(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+  // ---------------- Enfoques narrativos ----------------
+  function enfoques(d) {
+    if (d.tipo === 'comite') {
+      const e = ['operativo', 'dialogo'];
+      if ((d.compromisos || []).some(c => U.limpio(c.que))) e.push('acuerdos');
+      if (U.limpio(d.situaciones) || U.limpio(d.derivaciones)) e.push('necesidades');
+      return e;
+    }
+    const e = ['actividades', 'dialogo', 'recorrido'];
+    if (U.limpio(d.inquietudes)) e.push('necesidades');
+    return e;
+  }
+  // Orden de los temas según el enfoque (coherente: lo prioritario del enfoque primero).
+  const PRIORIDAD = {
+    actividades: ['funciones', 'aps'], dialogo: [], recorrido: ['funciones'], necesidades: ['necesidades', 'rutas', 'inquietudes', 'barreras', 'derivacion'],
+    operativo: ['planeacion', 'microterritorios', 'formatos', 'reporte'], acuerdos: ['compromisosPrevios', 'funciones']
+  };
+  function ordenar(temas, enfoque, r) {
+    const pr = PRIORIDAD[enfoque] || [];
+    const primero = pr.map(id => temas.find(t => t.id === id)).filter(Boolean);
+    const resto = barajar(temas.filter(t => primero.indexOf(t) === -1), r);
+    return primero.concat(resto);
+  }
+
+  // Marcos por enfoque. {n}: lo explicado. Construcciones sin concordancia
+  // dudosa ("se abordó lo relacionado con…", sujeto explícito).
+  const MARCOS_SOC = {
+    actividades: ['Se brindó información sobre {n}.', 'El gestor comunitario explicó {n}.', 'La socialización incluyó {n}.', 'Se abordó lo relacionado con {n}.', 'Se hizo énfasis en {n}.'],
+    dialogo: ['En los espacios de diálogo con {p} se conversó sobre {n}.', 'Durante la conversación con {p} se abordó lo relacionado con {n}.', 'Al intercambiar con {p} se brindó información sobre {n}.', 'En el diálogo sostenido se compartió información sobre {n}.'],
+    recorrido: ['A lo largo del recorrido se brindó información sobre {n}.', 'En cada punto del recorrido se abordó lo relacionado con {n}.', 'Durante el recorrido se dio a conocer lo relacionado con {n}.', 'En los acercamientos realizados se hizo énfasis en {n}.'],
+    necesidades: ['A partir de las inquietudes expresadas, se brindó información sobre {n}.', 'Atendiendo las preguntas planteadas, se explicó lo relacionado con {n}.', 'Para responder a las necesidades expresadas se abordó lo relacionado con {n}.']
+  };
+  const MARCOS_COM = {
+    operativo: ['En cuanto a los aspectos operativos, se trató lo relacionado con {n}.', 'El comité revisó {n}.', 'Los equipos analizaron lo concerniente a {n}.', 'Se revisaron aspectos relacionados con {n}.'],
+    dialogo: ['Los participantes conversaron sobre {n}.', 'Se generó un espacio de diálogo en torno a {n}.', 'En la discusión entre los equipos se trató lo relacionado con {n}.', 'Se abordó la importancia de {n}.'],
+    acuerdos: ['Con miras a establecer acuerdos, se trató lo relacionado con {n}.', 'Para la definición de responsabilidades, los equipos analizaron {n}.', 'Los participantes discutieron {n}, con el fin de definir compromisos de trabajo conjunto.'],
+    necesidades: ['A partir de las situaciones expuestas por los equipos, se analizó lo relacionado con {n}.', 'Frente a las necesidades identificadas en el territorio, se trató lo relacionado con {n}.', 'Considerando las situaciones reportadas, los equipos revisaron {n}.']
+  };
+  // Conectores entre párrafos (estructura distinta según la posición).
+  const CONECTORES = ['Asimismo, ', 'De igual manera, ', 'Por otra parte, ', 'Adicionalmente, ', 'En esa misma línea, ', 'También ', 'Otro de los temas centrales fue '];
+  // Dos temas en una misma oración.
+  const DOBLES_SOC = ['Se socializó igualmente lo relacionado con {n1}, así como con {n2}.', 'La información compartida abarcó {n1} y {n2}.', 'Se abordó lo relacionado con {n1} y con {n2}.'];
+  const DOBLES_COM = ['Los equipos revisaron {n1} y {n2}.', 'Se trató igualmente lo relacionado con {n1}, así como con {n2}.', 'El comité abordó {n1} y, en relación con ello, {n2}.'];
+
+  // ---------------- Aperturas ----------------
+  function apertura(d, v, ctx, enfoque) {
+    const p = publico(d).texto || 'las personas abordadas';
+    const h = ctx.h, eq = ctx.eq ? ', con la participación de ' + ctx.eq : '';
+    const marco = v('marco-' + d.tipo, ['En el marco de ' + ctx.marco + ', ', 'En cumplimiento de ' + ctx.marco + ', ', 'Atendiendo ' + ctx.marco + ', ', '']);
+    if (d.tipo === 'comite') {
+      const lc = lugarComite(d, ctx.L), e = equipos(d) || 'los equipos participantes';
+      const terr = lc.terr ? ', con relación al trabajo en ' + lc.terr : '';
+      return v('ap-com-' + enfoque, {
+        operativo: [marco + 'se llevó a cabo el comité de articulación entre los Equipos Más Bienestar en tu Hogar (EMBH) y los Equipos Básicos de Salud (EBS) del Ministerio de Salud' + lc.sitio + h + terr + ', con el fin de revisar los aspectos operativos del trabajo en territorio.',
+          'El comité de articulación EMBH–EBS se desarrolló' + lc.sitio + h + ', con la participación de ' + e + terr + ', como espacio para revisar la organización y el desarrollo de las actividades territoriales.'],
+        dialogo: ['Durante el comité se realizó un espacio de diálogo y socialización entre ' + e + lc.sitio + h + terr + ', orientado a precisar el trabajo conjunto y la coordinación de las acciones de Atención Primaria en Salud.',
+          marco + 'se desarrolló' + lc.sitio + h + ' el comité de articulación EMBH–EBS como un espacio de diálogo entre ' + e + terr + '.'],
+        acuerdos: ['Con la participación de ' + e + ', se llevó a cabo el comité de articulación EMBH–EBS' + lc.sitio + h + terr + ', espacio destinado a coordinar acciones y establecer acuerdos de trabajo conjunto.',
+          marco + 'se realizó el comité de articulación entre EMBH y EBS' + lc.sitio + h + terr + ', con el propósito de revisar los procesos compartidos y definir acuerdos entre los equipos.'],
+        necesidades: ['El comité de articulación EMBH–EBS se realizó' + lc.sitio + h + ', con la participación de ' + e + terr + ', centrado en las situaciones identificadas en el territorio y en la forma de abordarlas de manera conjunta.',
+          marco + 'se llevó a cabo el comité de articulación EMBH–EBS' + lc.sitio + h + terr + ', a partir de las situaciones operativas y de los casos expuestos por los equipos.']
+      }[enfoque]);
+    }
+    return v('ap-soc-' + enfoque, {
+      actividades: [marco + 'se llevó a cabo la socialización de la estrategia de los Equipos Básicos de Salud (EBS) del Ministerio de Salud y Protección Social en ' + ctx.L + h + eq + '.',
+        'Durante la jornada se realizó la socialización de los Equipos Básicos de Salud (EBS) en ' + ctx.L + h + eq + ', con el propósito de dar a conocer su finalidad y las actividades que desarrollan en el marco de la Atención Primaria en Salud (APS).'],
+      dialogo: ['Con el propósito de dar a conocer la estrategia de los Equipos Básicos de Salud (EBS), el gestor comunitario sostuvo espacios de diálogo con ' + p + ' en ' + ctx.L + h + eq + '.',
+        marco + 'se desarrollaron espacios de diálogo con ' + p + ' en ' + ctx.L + h + eq + ', orientados a socializar la estrategia de los Equipos Básicos de Salud del Ministerio de Salud y Protección Social.'],
+      recorrido: ['Durante la jornada se realizó un recorrido por ' + ctx.L + h + ', llevando a cabo acercamientos con ' + p + eq + ', con el propósito de dar a conocer la estrategia de los Equipos Básicos de Salud (EBS) y su finalidad en el territorio.',
+        'La socialización se desarrolló mediante un recorrido por ' + ctx.L + h + eq + ', en el que se presentó a ' + p + ' la estrategia de los Equipos Básicos de Salud del Ministerio de Salud y Protección Social.'],
+      necesidades: [marco + 'se realizó la socialización de los Equipos Básicos de Salud en ' + ctx.L + h + eq + ', orientada a reconocer las necesidades de salud de ' + p + ' y a informar sobre la oferta disponible.',
+        'La socialización de los Equipos Básicos de Salud en ' + ctx.L + h + eq + ' se orientó a escuchar las inquietudes de ' + p + ' y a brindar información sobre la oferta institucional.']
+    }[enfoque]);
+  }
+
+  // ---------------- Desarrollo ----------------
+  // Devuelve { antes: párrafos de la narración, despues: observaciones y conclusiones }.
+  function desarrollo(d, v, r, ctx) {
+    const antes = [], despues = [];
+    const tipo = d.tipo;
+    const enfoque = v('enfoque-' + tipo, enfoques(d));
+    const p = publico(d);
+    const pTexto = p.texto || 'las personas abordadas';
+    antes.push(apertura(d, v, ctx, enfoque));
+
+    // Público (socialización): el acercamiento a cada grupo marcado.
+    if (tipo === 'socializacion') {
+      if (enfoque !== 'recorrido') p.lista.forEach(x => antes.push(v('pub-' + x.id, x.acerca)));
+      if (U.limpio(d.publicoOtro)) antes.push(v('pub-otro', ['La socialización incluyó también a ' + U.limpio(d.publicoOtro) + '.', 'Se realizó igualmente acercamiento con ' + U.limpio(d.publicoOtro) + '.']));
+      const n = parseInt(d.personasAbordadas, 10);
+      if (n > 0) antes.push(v('n-pers', ['En total se abordaron ' + n + ' personas durante la actividad.', 'La socialización llegó a ' + n + ' personas.']));
+    }
+
+    // Temas: en el orden del enfoque, con marco, conector y profundidad variables.
+    const marcos = tipo === 'comite' ? MARCOS_COM[enfoque] : MARCOS_SOC[enfoque];
+    const temas = ordenar(temasElegidos(d), enfoque, r);
+    for (let i = 0; i < temas.length; i++) {
+      const t = temas[i];
+      const n1 = conG(v('t-' + tipo + '-' + t.id, t.nucleo), d);
+      // A veces dos temas comparten oración (sin detalle), para no repetir la misma estructura.
+      if (i > 0 && i + 1 < temas.length && r() < 0.3) {
+        const t2 = temas[i + 1];
+        const n2 = conG(v('t-' + tipo + '-' + t2.id, t2.nucleo), d);
+        antes.push(v('doble-' + tipo, tipo === 'comite' ? DOBLES_COM : DOBLES_SOC).replace('{n1}', n1).replace('{n2}', n2));
+        i++;
+        continue;
+      }
+      let frase = v('m-' + tipo + '-' + enfoque, marcos).replace('{n}', n1).replace('{p}', pTexto);
+      if (i > 0 && r() < 0.55) {
+        const c = v('con', CONECTORES);
+        frase = c === 'Otro de los temas centrales fue ' ? 'Otro de los temas centrales fue lo relacionado con ' + n1 + '.' : c + frase.charAt(0).toLowerCase() + frase.slice(1);
+      }
+      // Profundidad: con detalle algunas veces (más en el primer tema).
+      if (t.detalle.length && (i === 0 || r() < 0.55)) frase += ' ' + conG(v('d-' + tipo + '-' + t.id, t.detalle), d);
+      antes.push(frase);
+    }
+    if (!temas.length) antes.push(tipo === 'comite'
+      ? v('sin-temas-com', ['El comité abordó la articulación entre los equipos EMBH y EBS en el territorio.', 'Los equipos conversaron sobre la coordinación de sus acciones en el territorio.'])
+      : v('sin-temas-soc', ['Se dio a conocer la estrategia de los Equipos Básicos de Salud y su finalidad en el territorio.', 'Se presentó la estrategia de los Equipos Básicos de Salud del Ministerio de Salud y Protección Social.']));
+
+    // Notas libres del usuario.
+    ctx.formalizar(d.notas).forEach(x => antes.push(x));
+
+    if (tipo === 'socializacion') {
+      if (U.limpio(d.inquietudes)) {
+        antes.push('## ' + v('h-inq', ['Inquietudes y necesidades identificadas:', 'Necesidades e inquietudes manifestadas:']));
+        antes.push(v('inq', ['Durante la socialización se identificaron las siguientes inquietudes y necesidades:', 'En el desarrollo de la actividad se registró lo siguiente:']));
+        ctx.formalizar(d.inquietudes, true).forEach(x => antes.push('• ' + x.replace(/^•\s*/, '')));
+      }
+    } else {
+      if (U.limpio(d.situaciones)) {
+        antes.push(v('sit', ['Entre las situaciones operativas expuestas por los equipos se mencionó lo siguiente:', 'Los equipos expusieron las siguientes situaciones operativas:', 'En cuanto a las situaciones operativas discutidas, se registró:']));
+        ctx.formalizar(d.situaciones, true).forEach(x => antes.push('• ' + x.replace(/^•\s*/, '')));
+      }
+      if (U.limpio(d.derivaciones)) {
+        antes.push(v('der', ['En relación con las derivaciones y el seguimiento de casos, se informó lo siguiente:', 'Respecto a las derivaciones y su seguimiento, se registró:']));
+        ctx.formalizar(d.derivaciones, true).forEach(x => antes.push('• ' + x.replace(/^•\s*/, '')));
+      }
+      const acuerdos = (d.compromisos || []).filter(c => U.limpio(c.que));
+      if (acuerdos.length) antes.push(v('acu', ['Como resultado del comité se establecieron acuerdos que se registran en el apartado de compromisos, con sus responsables y fechas.', 'Los acuerdos definidos por los equipos quedaron consignados en la tabla de compromisos del acta.', 'Finalmente, los equipos establecieron los acuerdos que se detallan en el apartado de compromisos.']));
+    }
+
+    // Observaciones: lo marcado + lo escrito; si no hay nada, una recomendación (no un hecho).
+    const obs = [];
+    const cat = tipo === 'comite' ? OBS_COMITE : RESPUESTAS;
+    (d.respuestas || []).forEach(id => { const x = cat.find(k => k.id === id); if (x) obs.push(v('o-' + tipo + '-' + id, x.textos).replace('{p}', pTexto).replace('{P}', capital(pTexto))); });
+    ctx.formalizar(d.observaciones).forEach(x => obs.push(x));
+    if (!obs.length) obs.push(v('o-rec-' + tipo, tipo === 'comite' ? [
+      'Se recomienda mantener la periodicidad del comité para dar seguimiento a la articulación entre los equipos.',
+      'Se recomienda mantener claridad frente a las responsabilidades de cada equipo y garantizar el registro adecuado de la información.',
+      'Se recomienda fortalecer los canales de comunicación entre los equipos EMBH y EBS para la organización de las actividades territoriales.'
+    ] : [
+      'Se recomienda continuar realizando actividades de socialización en ' + ctx.Lc + ', con el fin de fortalecer el reconocimiento de los Equipos Básicos de Salud.',
+      'Se recomienda mantener el acercamiento con ' + pTexto + ' para ampliar la difusión de la estrategia y promover la participación comunitaria.',
+      'Se recomienda dar continuidad a la difusión de los programas, servicios y mecanismos de orientación disponibles en el sector.'
+    ]));
+    despues.push('## Observaciones:');
+    obs.forEach(x => despues.push(x));
+
+    // Conclusiones: sintetizan propósito, público/equipos y temas; sin afirmar resultados no registrados.
+    const cortos = U.listaProsa(temas.slice(0, 3).map(t => conG(t.corto, d)));
+    despues.push('## Conclusiones:');
+    if (tipo === 'comite') {
+      const e = equipos(d) || 'los equipos participantes';
+      despues.push(v('c-com-' + enfoque, [
+        'El comité constituyó un espacio de socialización y articulación entre ' + e + (cortos ? ', centrado en ' + cortos : '') + '.',
+        'En síntesis, el comité abordó ' + (cortos || 'la articulación entre los equipos') + ', como parte de la coordinación de las acciones de Atención Primaria en Salud.',
+        'El espacio permitió revisar ' + (cortos || 'la coordinación entre los equipos') + ' entre ' + e + '.',
+        'Se concluyó que la comunicación, la claridad en las responsabilidades y el registro adecuado de las actividades son aspectos fundamentales para la articulación entre los equipos' + (cortos ? ', en especial en lo relacionado con ' + cortos : '') + '.'
+      ]));
+      if ((d.compromisos || []).some(c => U.limpio(c.que))) despues.push(v('c-com-acu', ['Los acuerdos y sus responsables quedaron registrados en el apartado de compromisos.', 'Las responsabilidades definidas se consignan en el apartado de compromisos para su seguimiento.']));
+    } else {
+      despues.push(v('c-soc-' + enfoque, [
+        'La jornada permitió dar a conocer a ' + pTexto + ' ' + de(ctx.Lc) + ' la estrategia de los Equipos Básicos de Salud' + (cortos ? ', con énfasis en ' + cortos : '') + '.',
+        'En síntesis, la socialización abordó ' + (cortos || 'la estrategia de los Equipos Básicos de Salud') + ' con ' + pTexto + ', como parte del reconocimiento de la presencia institucional en ' + ctx.Lc + '.',
+        'La actividad se centró en ' + (cortos || 'la presentación de la estrategia de los Equipos Básicos de Salud') + ', dirigida a ' + pTexto + ' ' + de(ctx.Lc) + ', en el marco de la Atención Primaria en Salud.',
+        'De esta manera, se presentó a ' + pTexto + ' la estrategia de los Equipos Básicos de Salud del Ministerio de Salud y Protección Social' + (cortos ? ', haciendo énfasis en ' + cortos : '') + '.'
+      ]));
+    }
+    return { antes, despues, enfoque };
+  }
+
+  // ---------------- Objetivo, temas y compromisos ----------------
+  function objetivo(d, v, ctx) {
+    const temas = temasElegidos(d);
+    const fines = temas.slice(0, 2).map(t => conG(t.fin, d));
+    if (d.tipo === 'comite') {
+      const lc = lugarComite(d, ctx.L);
+      const fin = fines.length ? fines.join(' y ') : v('obj-com-fin', ['fortaleciendo la coordinación de las acciones de Atención Primaria en Salud', 'mediante la revisión de los procesos territoriales compartidos']);
+      return v('obj-com', [
+        'Socializar las funciones y responsabilidades de los Equipos Más Bienestar en tu Hogar (EMBH) y los Equipos Básicos de Salud (EBS – Ministerio de Salud), fortaleciendo la articulación entre los equipos de trabajo, ' + fin + '.',
+        'Desarrollar el comité de articulación entre los Equipos Más Bienestar en tu Hogar (EMBH) y los Equipos Básicos de Salud (EBS) del Ministerio de Salud' + (lc.terr ? ' para el trabajo en ' + lc.terr : '') + ', ' + fin + '.',
+        'Coordinar las acciones territoriales de los Equipos Más Bienestar en tu Hogar (EMBH) y de los Equipos Básicos de Salud (EBS – Ministerio de Salud), ' + fin + '.',
+        'Fortalecer la articulación entre los equipos EMBH y EBS' + (lc.terr ? ' en ' + lc.terr : '') + ', ' + fin + '.'
+      ]);
+    }
+    const p = publico(d).texto;
+    const a = p ? ' con ' + p + ' ' + de(ctx.L) : ' en ' + ctx.L;
+    const fin = fines.length ? fines.join(' y ') : v('obj-soc-fin', ['dando a conocer las acciones de Atención Primaria en Salud y la importancia de promover el acceso a los servicios de salud', 'promoviendo el reconocimiento de la presencia institucional en el territorio']);
+    return v('obj-soc', [
+      'Realizar la socialización de la estrategia de los Equipos Básicos de Salud (EBS) del Ministerio de Salud y Protección Social' + a + ', ' + fin + '.',
+      'Dar a conocer la estrategia de los Equipos Básicos de Salud del Ministerio de Salud y Protección Social' + a + ', ' + fin + '.',
+      'Socializar las funciones y el alcance de los Equipos Básicos de Salud (EBS – Ministerio de Salud)' + a + ', ' + fin + '.',
+      'Acercar la estrategia de los Equipos Básicos de Salud a la comunidad' + (p ? ', en particular a ' + p + ',' : '') + ' en ' + ctx.L + ', ' + fin + '.'
+    ]);
+  }
+
+  // Temas a tratar: solo los marcados (más el acercamiento si hay público).
+  function temas(d) {
+    const t = temasElegidos(d).map(x => conG(x.tema, d));
+    if (d.tipo === 'socializacion') {
+      const p = publico(d).texto;
+      if (p) t.push('Acercamiento con ' + p + ' y fortalecimiento de la participación comunitaria.');
+      if (!t.length) t.push(TEMAS_SOC[0].tema);
+    } else {
+      if ((d.compromisos || []).some(c => U.limpio(c.que)) && t.every(x => !/compromisos/i.test(x))) t.push('Definición de acuerdos y compromisos entre los equipos.');
+      if (!t.length) t.push('Articulación entre los Equipos Más Bienestar en tu Hogar (EMBH) y los Equipos Básicos de Salud (EBS).');
+    }
+    return t;
+  }
+
+  function compromisoHabitual(d, L) {
+    const cargo = (U.limpio(d.elaboraCargo) || 'gestor comunitario').toLowerCase();
+    return {
+      que: d.tipo === 'comite'
+        ? 'Dar continuidad a la articulación entre los Equipos Más Bienestar en tu Hogar (EMBH) y los Equipos Básicos de Salud (EBS) como ' + cargo + '.'
+        : 'Realizar apoyo a los Equipos Básicos de Salud EBS-Ministerio como ' + cargo + ' en la socialización de la estrategia en ' + L + '.',
+      quien: U.limpio(d.elaboraNombre), cuando: 'Continuo', cumplido: '', observaciones: 'Sin novedad'
+    };
+  }
+
+  // Compromisos sugeridos (el usuario decide cuáles agregar): varían por acta.
+  function sugerenciasCompromisos(d, r, Lc) {
+    const p = publico(d).texto || 'la comunidad';
+    const ya = (d.compromisos || []).map(c => U.norm(c.que));
+    return barajar(COMPROMISOS[d.tipo] || [], r).map(x => x.replace('{T}', Lc).replace('{p}', p)).filter(x => ya.indexOf(U.norm(x)) === -1).slice(0, 4);
+  }
+
+  function avisos(d) {
+    const out = [];
+    if (!temasElegidos(d).length) out.push({ campo: 'temasActividad', mensaje: d.tipo === 'comite' ? 'Marca los temas que se trataron en el comité; sin ellos el desarrollo será general.' : 'Marca los temas que efectivamente socializaste; sin ellos el desarrollo será general.' });
+    if (d.tipo === 'socializacion' && !publico(d).texto) out.push({ campo: 'publico', mensaje: 'Indica con qué público se hizo la socialización (comerciantes, residentes…).' });
+    if (d.tipo === 'comite' && !equipos(d)) out.push({ campo: 'equiposComite', mensaje: 'Indica qué equipos participaron en el comité.' });
+    return out;
+  }
+
+  // Frases propias del módulo (para que el lector de Corregir las reconozca como plantilla).
+  function frasesFijas() {
+    const out = [];
+    TEMAS_SOC.concat(TEMAS_COM).forEach(t => out.push(...t.detalle, t.tema));
+    PUBLICO.forEach(p => out.push(...p.acerca));
+    RESPUESTAS.concat(OBS_COMITE).forEach(o => out.push(...o.textos));
+    return out;
+  }
+
+  A.actividades = {
+    PUBLICO, TEMAS_SOC, TEMAS_COM, EQUIPOS, RESPUESTAS, OBS_COMITE, COMPROMISOS, TEMAS_EXTRA,
+    maneja, catalogo, temasElegidos, objetivo, temas, desarrollo, compromisoHabitual, sugerenciasCompromisos, avisos, enfoques, frasesFijas
+  };
 })(globalThis.Actas = globalThis.Actas || {});
 
 </script>
@@ -3946,6 +4483,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const TIPOS = {
     ruteo: { etiqueta: 'Ruteo', ejecutada: true, nombre: 'jornada de gestión territorial' },
     lider: { etiqueta: 'Líder social', ejecutada: true, nombre: 'gestión con líderes sociales' },
+    socializacion: { etiqueta: 'Socialización EBS', ejecutada: true, nombre: 'socialización de los Equipos Básicos de Salud' },
+    comite: { etiqueta: 'Comité EMBH–EBS', ejecutada: true, nombre: 'comité de articulación EMBH–EBS' },
     jornada: { etiqueta: 'Jornada comunitaria', ejecutada: true, nombre: 'jornada comunitaria de salud' },
     seguimiento: { etiqueta: 'Seguimiento a casos', ejecutada: true, nombre: 'actividad de seguimiento' },
     articulacion: { etiqueta: 'Articulación intersectorial', ejecutada: true, nombre: 'espacio de articulación intersectorial' },
@@ -4126,12 +4665,31 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return r;
   }
 
+  // Socialización EBS y comité EMBH–EBS (A.actividades).
+  const ACT = () => A.actividades;
+  function esActividad(d) { return !!(A.actividades && A.actividades.maneja(d.tipo)); }
+  function lugarCorto(d) {
+    const b = lineas(String(d.barrios || '').replace(/[,;]/g, '\n'));
+    return U.limpio(d.microterritorio) ? 'el microterritorio ' + U.limpio(d.microterritorio) : b.length ? (b.length > 1 ? 'los barrios ' : 'el barrio ') + U.listaProsa(b) : (U.limpio(d.localidad) ? 'la localidad de ' + U.limpio(d.localidad) : 'el territorio');
+  }
+  function ctxActividad(d) {
+    return { L: lugar(d), Lc: lugarCorto(d), h: horario(d), marco: U.limpio(d.marco) || MARCO_DEFECTO, eq: equipoTexto(d), formalizar };
+  }
+  // Variantes de esta generación: evita las de actas recientes y la versión anterior.
+  function variadorDe(d, etiqueta) {
+    d._usadosTexto = d._usadosTexto || [];
+    return U.variador(U.rng(etiqueta + '|' + (d.id || '') + '|' + (d._semilla || 0)), d._recientesTexto || [], d._usadosTexto);
+  }
+
   // ---------------- Sugerencias (el usuario decide) ----------------
   function sugerirTemas(d) {
     const tipo = d.tipo || 'ruteo';
     const t = [];
     if (tipo === 'lider' && A.lider) {
       A.lider.temas().forEach(x => t.push(x));
+    } else if (esActividad(d)) {
+      ACT().temas(d).forEach(x => t.push(x));
+      return t; // solo lo marcado: no se agregan temas que no se trataron
     } else if (tipo === 'planeacion') {
       t.push('Revisión de las actividades de gestión territorial por programar.');
       t.push('Definición de territorios, fechas y responsables.');
@@ -4165,6 +4723,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   function sugerirCompromiso(d) {
     if (d.tipo === 'lider' && A.lider) return A.lider.compromiso(d, lugar(d));
+    if (esActividad(d)) return ACT().compromisoHabitual(d, lugarCorto(d));
     const mod = U.limpio(d.modalidad) || 'ruteo';
     return {
       que: 'Realizar apoyo a los Equipos Básicos de Salud EBS-Ministerio como ' + (U.limpio(d.elaboraCargo) || 'gestor comunitario').toLowerCase() +
@@ -4178,6 +4737,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   // ---------------- Secciones ----------------
   function objetivo(d, r) {
     if (U.limpio(d.objetivoManual)) return [oracion(d.objetivoManual)];
+    if (esActividad(d)) return [oracion(ACT().objetivo(d, variadorDe(d, 'obj-act'), ctxActividad(d)))];
     const tipo = d.tipo || 'ruteo';
     const L = lugar(d);
     const grupo = U.limpio(d.grupo) ? ' con el Equipo Básico de Salud ' + U.limpio(d.grupo) : '';
@@ -4242,20 +4802,25 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   function desarrollo(d, r) {
     const out = [];
     const tipo = d.tipo || 'ruteo';
-    if (tipo === 'lider' && A.lider) {
+    // Socialización y comité: narración propia según el enfoque de esta generación;
+    // las observaciones y conclusiones se agregan antes de las evidencias.
+    const act = esActividad(d) ? ACT().desarrollo(d, variadorDe(d, 'des-act'), U.rng('orden|' + (d.id || '') + '|' + (d._semilla || 0)), ctxActividad(d)) : null;
+    if (act) act.antes.forEach(x => out.push(x));
+    else if (tipo === 'lider' && A.lider) {
       A.lider.apertura(d, r, { L: lugar(d), h: horario(d), marco: U.limpio(d.marco) || MARCO_DEFECTO, eq: equipoTexto(d) }).forEach(x => out.push(oracion(x)));
     } else out.push(apertura(d, r));
 
     // Redacción amplia (activa por defecto): párrafos institucionales del
     // programa y la metodología que llenan el acta sin inventar hechos.
-    const amplio = d.redaccionAmplia !== false && A.amplia ? A.amplia.generar({
+    const amplio = !act && d.redaccionAmplia !== false && A.amplia ? A.amplia.generar({
       L: lugar(d), g: U.limpio(d.grupo) ? ' al Equipo Básico de Salud ' + U.limpio(d.grupo) : '',
       mod: U.limpio(d.modalidad).toLowerCase(), loc: U.limpio(d.localidad)
     }, tipo, TIPOS[tipo].ejecutada, U.rng('amplia|' + (d.id || '') + '|' + (d._semilla || 0))) : null;
     if (amplio) amplio.contexto.forEach(x => out.push(x));
 
-    const notas = formalizar(d.notas);
+    const notas = act ? [] : formalizar(d.notas); // en socialización y comité ya van en la narración
     if (notas.length) notas.forEach(n => out.push(n));
+    else if (act) { /* el desarrollo ya está narrado */ }
     else if (!amplio && TIPOS[tipo].ejecutada) out.push(P('descripción de lo realizado en la actividad'));
     else if (!amplio) out.push(P('decisiones y acuerdos de la reunión'));
     // Líder social: un párrafo por cada persona contactada.
@@ -4328,6 +4893,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
     if (amplio) amplio.enfoque.concat(amplio.cierre).forEach(x => out.push(x));
     if (amplio && amplio.cierre.length) out.cierre = amplio.cierre[0]; // el relleno va antes del cierre
+    if (act) { out.cierre = act.despues[0]; act.despues.forEach(x => out.push(x)); out.enfoque = act.enfoque; }
 
     // Las secciones "Dificultades presentadas" y "Recomendaciones" se retiraron del
     // acta por solicitud del usuario: ya no se escriben aunque un borrador antiguo
@@ -4409,7 +4975,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     // 2. Temas: se completan sus 5 renglones con temas propios del tipo de actividad.
     if (!textos.temas) {
       const ya = sec.temas.map(t => U.norm(t));
-      AM.varios(r, ejecutada ? AM.TEMAS_EXTRA.ejecutada : AM.TEMAS_EXTRA.planeada, 9).forEach(t => {
+      const extra = esActividad(d) ? ACT().TEMAS_EXTRA[d.tipo] : (ejecutada ? AM.TEMAS_EXTRA.ejecutada : AM.TEMAS_EXTRA.planeada);
+      AM.varios(r, extra, 9).forEach(t => {
         const linea = '• ' + t;
         if (ya.indexOf(U.norm(linea)) === -1 && contar(sec.temas.concat([linea]), false) <= R0.temas) { sec.temas.push(linea); ya.push(U.norm(linea)); }
       });
@@ -4421,9 +4988,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       // Se insertan antes del cierre / de Dificultades, Recomendaciones y Evidencias.
       const cierre = sec.desarrollo.cierre;
       let pos = cierre ? sec.desarrollo.indexOf(cierre) : -1;
-      if (pos === -1) pos = sec.desarrollo.findIndex(x => /^##\s+(Dificultades|Recomendaciones|Evidencias)/.test(x));
+      if (pos === -1) pos = sec.desarrollo.findIndex(x => /^##\s+(Dificultades|Recomendaciones|Observaciones|Conclusiones|Evidencias)/.test(x));
       if (pos === -1) pos = sec.desarrollo.length;
-      const c = { L: lugar(d), loc: U.limpio(d.localidad) };
+      const c = { L: esActividad(d) ? lugarCorto(d) : lugar(d), loc: U.limpio(d.localidad) };
       const usados = new Set(sec.desarrollo.map(x => U.norm(x)));
       // Primero párrafos completos; al final, frases de un renglón para ajustar el cierre.
       AM.varios(r, AM.RELLENO, AM.RELLENO.length).concat(AM.varios(r, AM.RELLENO_CORTO, AM.RELLENO_CORTO.length)).forEach(f => {
@@ -4447,6 +5014,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       temas: textos.temas ? textos.temas.split(/\n+/).filter(s => s.trim()) : (d.temas && d.temas.length ? d.temas : sugerirTemas(d)).map(t => '• ' + oracion(t)),
       desarrollo: textos.desarrollo ? textos.desarrollo.split(/\n+/).filter(s => s.trim()) : desarrollo(d, r)
     };
+    sec.desarrolloEnfoque = sec.desarrollo.enfoque;
     if (d.redaccionAmplia !== false && A.amplia && A.motor && A.motor.contarRenglones) llenarRenglones(d, sec, textos);
     // Texto corrido (por defecto): objetivo y desarrollo en un solo párrafo cada uno,
     // sin renglones en blanco; cada renglón se llena hasta el borde.
@@ -4468,6 +5036,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       temas: sec.temas,
       desarrollo: sec.desarrollo,
       dss: d._dssRes ? { usados: d._dssRes.usados, ids: d._dssRes.ids, faltan: d._dssRes.faltan } : null,
+      variacion: d._usadosTexto ? { usados: d._usadosTexto.slice(), enfoque: (sec.desarrolloEnfoque || '') } : null,
       // El compromiso habitual del gestor va primero (interruptor del paso 5, activo por defecto).
       compromisos: (d.compromisoHabitual !== false ? [sugerirCompromiso(d)] : []).concat(d.compromisos || []).filter(c => U.limpio(c.que) || U.limpio(c.quien)).map(c => ({
         que: oracion(c.que), quien: U.limpio(c.quien),
@@ -4488,7 +5057,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
 
   function nombreArchivo(d) {
-    const tipo = { ruteo: 'Ruteo', lider: 'Lider_Social', jornada: 'Jornada', seguimiento: 'Seguimiento', articulacion: 'Articulacion', planeacion: 'Planeacion', reunion: 'Reunion' }[d.tipo] || 'Ruteo';
+    const tipo = { ruteo: 'Ruteo', lider: 'Lider_Social', socializacion: 'Socializacion_EBS', comite: 'Comite_EMBH_EBS', jornada: 'Jornada', seguimiento: 'Seguimiento', articulacion: 'Articulacion', planeacion: 'Planeacion', reunion: 'Reunion' }[d.tipo] || 'Ruteo';
     const barrio = lineas(String(d.barrios || '').replace(/[,;]/g, '\n'))[0] || U.limpio(d.microterritorio) || U.limpio(d.localidad);
     return ['Acta', d.fecha || 'sin-fecha', U.nombreArchivoSeguro(tipo), U.nombreArchivoSeguro(barrio || '')].filter(Boolean).join('_') + '.docx';
   }
@@ -4496,7 +5065,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   A.redaccion = {
     TIPOS, MODALIDADES, HALLAZGOS, DIFICULTADES, CIFRAS, MARCO_DEFECTO,
     construir, formalizar, formalizarFrase, clasificarNotas, sugerirTemas, sugerirRecomendaciones, sugerirCompromiso,
-    textoPlano, nombreArchivo, lugar, determinantes
+    textoPlano, nombreArchivo, lugar, lugarCorto, determinantes
   };
 })(globalThis.Actas = globalThis.Actas || {});
 
@@ -4551,8 +5120,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (!U.limpio(d.elaboraNombre)) add('error', 1, 'elaboraNombre', 'Falta el nombre de quien elabora el acta.');
 
     // ---- Actividad y territorio (paso 2) ----
-    if (!U.limpio(d.localidad)) add('error', 2, 'localidad', 'Falta la localidad.');
-    if (!U.limpio(d.barrios) && !U.limpio(d.microterritorio)) add('error', 2, 'barrios', 'Indica el barrio o el micro territorio.');
+    // El comité puede hacerse fuera del territorio (sede, oficina): ahí el territorio es opcional.
+    const comite = d.tipo === 'comite';
+    if (!U.limpio(d.localidad)) add(comite ? 'aviso' : 'error', 2, 'localidad', comite ? 'Sin localidad: el acta no menciona el territorio del comité.' : 'Falta la localidad.');
+    if (!U.limpio(d.barrios) && !U.limpio(d.microterritorio) && !comite) add('error', 2, 'barrios', 'Indica el barrio o el micro territorio.');
+    if (A.actividades && A.actividades.maneja(d.tipo)) A.actividades.avisos(d).forEach(x => add('aviso', 2, x.campo, x.mensaje));
     if (d.tipo === 'ruteo' && !U.limpio(d.modalidad)) add('aviso', 2, 'modalidad', 'Indica la modalidad de intervención.');
     if (d.tipo === 'lider') {
       const pers = d.personas || [];
@@ -4572,7 +5144,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const editadoDes = d.textos && U.limpio(d.textos.desarrollo);
     // Con redacción amplia el desarrollo ya tiene texto institucional: sin notas
     // propias solo se avisa (el acta no tendrá hechos particulares de la jornada).
-    if (!U.limpio(notas) && !editadoDes && !(d.tipo === 'lider' && (d.personas || []).some(p => U.limpio(p.nombre)))) add(d.redaccionAmplia !== false ? 'aviso' : 'error', 3, 'notas', tipo.ejecutada
+    if (!U.limpio(notas) && !editadoDes && !(A.actividades && A.actividades.maneja(d.tipo)) && !(d.tipo === 'lider' && (d.personas || []).some(p => U.limpio(p.nombre)))) add(d.redaccionAmplia !== false ? 'aviso' : 'error', 3, 'notas', tipo.ejecutada
       ? (d.redaccionAmplia !== false ? 'Sin notas propias: el desarrollo solo tendrá texto institucional general. Agrega lo particular de esta jornada si lo tienes.' : 'Describe lo que se realizó en la actividad (puedes escribir notas breves).')
       : 'Registra lo tratado y acordado en la reunión.');
     if (U.limpio(notas) && U.limpio(notas).length < 60 && !editadoDes) add('aviso', 3, 'notas', 'La descripción es muy breve; agrega lo esencial de la actividad.');
@@ -5177,6 +5749,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       .concat(A.lider ? A.lider.METODO.map(f => f(ctx)) : [])
       .concat(R.DIFICULTADES.reduce((a, x) => a.concat([x.texto, x.rec]), []))
       .concat(A.dss ? A.dss.frasesFijas() : [])
+      .concat(A.actividades ? A.actividades.frasesFijas() : [])
       .concat(redaccionesPosibles(d));
     const plantilla = s => {
       const n = U.norm(s);
@@ -8257,6 +8830,7 @@ function llenarCampo(xml, token, texto, terminos, separar){
     });
     $('f-marco').placeholder = R.MARCO_DEFECTO;
     pintarChips('chipsHallazgos', R.HALLAZGOS, 'hallazgos');
+    pintarActividad();
     pintarDetallesHallazgos();
     pintarCifras();
     pintarDeterminantes();
@@ -8268,17 +8842,53 @@ function llenarCampo(xml, token, texto, terminos, separar){
     actualizarPasos();
   }
 
+  // Socialización y comité: chips de público, equipos, temas y observaciones según el tipo.
+  const ACT = A.actividades;
+  function pintarActividad() {
+    const tipo = st.reg.datos.tipo;
+    if (!ACT || !ACT.maneja(tipo)) return;
+    pintarChips('chipsPublico', ACT.PUBLICO, 'publico');
+    pintarChips('chipsEquiposComite', ACT.EQUIPOS, 'equiposComite');
+    // Los temas y observaciones de un tipo no valen para el otro (aunque compartan
+    // identificador, como "funciones"): al cambiar de tipo se empiezan de cero.
+    const cat = ACT.catalogo(tipo);
+    if (st.reg.datos.temasActividadTipo && st.reg.datos.temasActividadTipo !== tipo) { st.reg.datos.temasActividad = []; st.reg.datos.respuestas = []; }
+    st.reg.datos.temasActividadTipo = tipo;
+    st.reg.datos.temasActividad = (st.reg.datos.temasActividad || []).filter(id => cat.some(t => t.id === id));
+    const gt = U.limpio(st.reg.datos.gtaps) || 'GTAPS';
+    pintarChips('chipsTemasActividad', cat.map(t => ({ id: t.id, etiqueta: t.etiqueta.replace('GTAPS', gt) })), 'temasActividad');
+    const obs = tipo === 'comite' ? ACT.OBS_COMITE : ACT.RESPUESTAS;
+    st.reg.datos.respuestas = (st.reg.datos.respuestas || []).filter(id => obs.some(o => o.id === id));
+    pintarChips('chipsRespuestas', obs, 'respuestas');
+    $('tituloTemasActividad').textContent = tipo === 'comite' ? 'Temas tratados en el comité' : 'Temas socializados';
+    $('tituloRespuestas').textContent = tipo === 'comite' ? 'Situaciones que se evidenciaron' : 'Cómo respondió el público';
+    pintarSugerenciasComp();
+  }
+  // Compromisos sugeridos: no entran al acta hasta que el usuario los agrega.
+  function pintarSugerenciasComp() {
+    const cont = $('sugerenciasCompromisos');
+    const d = st.reg.datos;
+    if (!ACT || !ACT.maneja(d.tipo)) { cont.innerHTML = ''; return; }
+    const sug = ACT.sugerenciasCompromisos(d, U.rng('sugcomp|' + d.id + '|' + (st.reg.semilla || 0)), R.lugarCorto(d));
+    cont.innerHTML = sug.length ? '<p class="ayuda-grupo">Sugerencias para ' + (d.tipo === 'comite' ? 'este comité' : 'esta socialización') + ': solo entran al acta si las agregas y quedan editables.</p><div class="sugerencias-lista">' +
+      sug.map(x => '<button type="button" class="sugerencia" data-sug-comp="' + U.esc(x) + '">' + icono('mas') + '<span>' + U.esc(x) + '</span></button>').join('') + '</div>' : '';
+  }
+
   function visibilidadTipo() {
     const tipo = st.reg.datos.tipo || 'ruteo';
     document.querySelectorAll('[data-solo]').forEach(el => { el.hidden = el.dataset.solo.split(' ').indexOf(tipo) === -1; });
     document.querySelectorAll('[data-oculto]').forEach(el => { el.hidden = el.dataset.oculto.split(' ').indexOf(tipo) !== -1; });
-    const lider = tipo === 'lider';
-    $('t-paso3').textContent = lider ? 'Desarrollo del acercamiento' : 'Resultados del ruteo';
+    const lider = tipo === 'lider', act = ACT && ACT.maneja(tipo);
+    $('t-paso3').textContent = lider ? 'Desarrollo del acercamiento' : tipo === 'comite' ? 'Desarrollo del comité' : tipo === 'socializacion' ? 'Desarrollo de la socialización' : 'Resultados del ruteo';
     $('t-paso3').nextElementSibling.textContent = lider
       ? 'El acta se redacta sola con las personas contactadas del paso 2. Las notas son opcionales, para agregar algo puntual.'
-      : 'Solo escribe las cifras: el acta redacta el desarrollo completo. Las notas son opcionales, para agregar algo puntual de la jornada.';
+      : act ? 'El acta se redacta con los temas del paso 2. Aquí agrega lo que pasó: inquietudes, situaciones y observaciones. Todo es opcional.'
+        : 'Solo escribe las cifras: el acta redacta el desarrollo completo. Las notas son opcionales, para agregar algo puntual de la jornada.';
     const paso3 = document.querySelector('#listaPasos [data-ir="3"]');
-    if (paso3) { paso3.querySelector('b').textContent = lider ? 'Desarrollo' : 'Resultados'; const sm = paso3.querySelector('small'); sm.dataset.orig = lider ? 'Notas y entorno' : 'Cifras de la jornada'; sm.textContent = sm.dataset.orig; }
+    if (paso3) { paso3.querySelector('b').textContent = lider || act ? 'Desarrollo' : 'Resultados'; const sm = paso3.querySelector('small'); sm.dataset.orig = lider ? 'Notas y entorno' : act ? 'Observaciones' : 'Cifras de la jornada'; sm.textContent = sm.dataset.orig; }
+    $('t-paso2').nextElementSibling.textContent = tipo === 'comite' ? 'Equipos, temas y lugar del comité. Con esto el acta redacta el objetivo, los temas y el desarrollo.'
+      : tipo === 'socializacion' ? 'Dónde se hizo la socialización, con qué público y qué temas. Con esto el acta redacta el objetivo, los temas y el desarrollo.'
+        : 'Dónde se hizo el ruteo y con qué equipo. Con esto el acta redacta el objetivo, los temas y el desarrollo.';
   }
 
   function pintarChips(contId, catalogo, lista) {
@@ -8591,11 +9201,30 @@ function llenarCampo(xml, token, texto, terminos, separar){
     d.temas = temasFinales(d);
     const h = D.historial(S.listar(), reg);
     d._recientesDss = h.recientes; d._combosRecientes = h.combos;
+    d._recientesTexto = recientesTexto(reg);
     return d;
+  }
+  // Frases ya usadas: en las 6 actas anteriores y en la versión previa de esta acta
+  // (así "Otra redacción" cambia de verdad y la vista previa no cambia sola).
+  function recientesTexto(reg) {
+    const creado = reg.creado || Date.now();
+    let rec = S.listar().filter(r => r.id !== reg.id && (r.creado || 0) < creado && r.datos && r.datos.variacion)
+      .sort((a, b) => (b.creado || 0) - (a.creado || 0)).slice(0, 6)
+      .reduce((a, r) => a.concat(r.datos.variacion.usados || []), []);
+    const v = reg.datos.variacion;
+    if (v) rec = rec.concat(v.semilla !== (reg.semilla || 0) ? (v.usados || []) : (v.previos || []));
+    return rec;
   }
   function datosParaRedactar() { return paraRedactar(st.reg); }
   // Guarda qué redacciones y determinantes usó esta acta (sin marcarla como cambiada).
   function anotarDss(reg, m) {
+    if (m.variacion) {
+      const v = reg.datos.variacion || {};
+      const sem = reg.semilla || 0;
+      if (v.semilla !== sem) { v.previos = v.usados || []; v.semilla = sem; }
+      v.usados = m.variacion.usados; v.enfoque = m.variacion.enfoque;
+      reg.datos.variacion = v;
+    }
     if (!m.dss) return;
     const s = D.normalizar(reg.datos);
     s.usados = m.dss.usados; s.ids = m.dss.ids;
@@ -8893,7 +9522,7 @@ function llenarCampo(xml, token, texto, terminos, separar){
     // Las actas son de ruteo (modalidad "Ruteo") y en texto corrido, sin renglones en
     // blanco: se ajustan también los borradores guardados con la versión anterior.
     // Dos tipos de acta: ruteo y líder social. Otros tipos antiguos pasan a ruteo.
-    if (['ruteo', 'lider'].indexOf(st.reg.datos.tipo) === -1) st.reg.datos.tipo = 'ruteo';
+    if (['ruteo', 'lider', 'socializacion', 'comite'].indexOf(st.reg.datos.tipo) === -1) st.reg.datos.tipo = 'ruteo';
     st.reg.datos.modalidad = 'Ruteo';
     if (!st.reg.datos.personas) st.reg.datos.personas = [];
     D.normalizar(st.reg.datos); // actas anteriores: los determinantes pasan al módulo nuevo
@@ -9155,6 +9784,13 @@ function llenarCampo(xml, token, texto, terminos, separar){
       if (t.dataset.campo) {
         const v = t.type === 'checkbox' ? t.checked : t.value;
         ponerRuta(st.reg.datos, t.dataset.campo, v);
+        if (t.dataset.campo === 'tipo') {
+          const NOMBRE_EBS = 'EQUIPOS BASICOS DE SALUD-EBS', NOMBRE_COMITE = 'COMITÉ DE ARTICULACIÓN EMBH - EBS';
+          const nr = st.reg.datos.nombreReunion;
+          if (t.value === 'comite' && (!U.limpio(nr) || nr === NOMBRE_EBS)) { st.reg.datos.nombreReunion = NOMBRE_COMITE; $('f-nombreReunion') && ($('f-nombreReunion').value = NOMBRE_COMITE); }
+          if (t.value !== 'comite' && nr === NOMBRE_COMITE) { st.reg.datos.nombreReunion = NOMBRE_EBS; $('f-nombreReunion') && ($('f-nombreReunion').value = NOMBRE_EBS); }
+          pintarActividad();
+        }
         if (t.dataset.campo === 'tipo') { visibilidadTipo(); pintarTemas(); if (t.value === 'lider' && !(st.reg.datos.personas || []).length) { st.reg.datos.personas = [PLANTILLAS_FILA.personas.nuevo()]; pintarFilas('personas'); } }
         // Un mismo interruptor puede estar en dos pasos: se mantienen iguales.
         if (t.type === 'checkbox') document.querySelectorAll('[data-campo="' + t.dataset.campo + '"]').forEach(x => { if (x !== t) x.checked = t.checked; });
@@ -9198,8 +9834,14 @@ function llenarCampo(xml, token, texto, terminos, separar){
         if (i === -1) d[lista].push(b.dataset.chip); else d[lista].splice(i, 1);
         b.setAttribute('aria-pressed', i === -1);
         if (lista === 'hallazgos') { pintarDetallesHallazgos(); D.sincronizar(st.reg.datos); pintarDeterminantes(); }
+        if (lista === 'publico' || lista === 'temasActividad') pintarSugerenciasComp();
         pintarTemas();
         cambio();
+      } else if (b.dataset.sugComp) {
+        st.reg.datos.compromisos = st.reg.datos.compromisos || [];
+        st.reg.datos.compromisos.push({ que: b.dataset.sugComp, quien: '', cuando: '', cumplido: '', observaciones: '' });
+        pintarFilas('compromisos'); pintarSugerenciasComp(); cambio();
+        avisar('Compromiso agregado: completa el responsable y la fecha', 'info');
       } else if (b.dataset.agregar) {
         const tipo = b.dataset.agregar;
         st.reg.datos[tipo] = st.reg.datos[tipo] || [];
@@ -9244,7 +9886,10 @@ function llenarCampo(xml, token, texto, terminos, separar){
       st.reg.semilla = (st.reg.semilla || 0) + 1;
       const editados = Object.keys(st.reg.datos.textos || {}).filter(k => st.reg.datos.textos[k]);
       pintarTextos(); cambio(); programarPrevia(0);
-      avisar(editados.length ? 'Nueva redacción aplicada a las secciones no editadas a mano' : 'Nueva redacción: mismas cifras, nombres y hechos', 'info');
+      const ENF = { actividades: 'centrada en las actividades', dialogo: 'centrada en el diálogo', recorrido: 'centrada en el recorrido', necesidades: 'centrada en las necesidades', operativo: 'centrada en lo operativo', acuerdos: 'centrada en los acuerdos' };
+      let enf = '';
+      if (ACT && ACT.maneja(st.reg.datos.tipo)) { const m = modeloActual(); enf = m.variacion && ENF[m.variacion.enfoque] ? ' (' + ENF[m.variacion.enfoque] + ')' : ''; guardarYa(); }
+      avisar(editados.length ? 'Nueva redacción' + enf + ' en las secciones no editadas a mano: ' + editados.length + ' sección(es) editada(s) se conservan' : 'Nueva redacción' + enf + ': mismos datos y hechos', 'info');
     };
     $('btnCopiar').onclick = () => {
       const t = R.textoPlano(R.construir(datosParaRedactar(), st.reg.semilla || 0));
